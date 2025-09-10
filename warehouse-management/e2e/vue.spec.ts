@@ -1,8 +1,22 @@
 import { test, expect } from '@playwright/test';
 
-// See here how to get started:
-// https://playwright.dev/docs/intro
-test('visits the app root url', async ({ page }) => {
+test('redirects to login when not authenticated', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('h1')).toHaveText('You did it!');
-})
+  await expect(page).toHaveURL(/.*\/login/);
+  await expect(page.locator('h1')).toHaveText('Đăng nhập');
+});
+
+test('can login with credentials', async ({ page }) => {
+  await page.goto('/login');
+
+  // Fill login form
+  await page.fill('#username', 'testuser');
+  await page.fill('#password', 'testpass');
+
+  // Submit form
+  await page.click('button[type="submit"]');
+
+  // Should redirect to home page
+  await expect(page).toHaveURL('/');
+  await expect(page.locator('h1')).toHaveText('Hệ thống quản lý kho hàng');
+});
