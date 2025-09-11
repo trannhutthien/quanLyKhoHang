@@ -2,6 +2,7 @@
   <div class="about">
     <h1>About Warehouse Management</h1>
     <p>This system helps manage warehouse operations including inventory, orders, and logistics.</p>
+  
   </div>
 </template>
 
