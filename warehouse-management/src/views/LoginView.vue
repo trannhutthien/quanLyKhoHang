@@ -34,7 +34,11 @@
         <div v-if="errorMessage" class="error-message">
           {{ errorMessage }}
         </div>
-        
+
+        <div class="login-hint">
+          <strong>Tài khoản test:</strong> admin / 123456
+        </div>
+
         <button type="submit" class="login-button" :disabled="isLoading">
           <span v-if="isLoading">Đang đăng nhập...</span>
           <span v-else>Đăng nhập</span>
@@ -54,6 +58,9 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
+const DEFAULT_USERNAME = 'admin'
+const DEFAULT_PASSWORD = '123456'
+
 // Form data
 const loginForm = reactive({
   username: '',
@@ -68,27 +75,30 @@ const errorMessage = ref('')
 const handleLogin = async () => {
   // Reset error message
   errorMessage.value = ''
-  
+
   // Validate form
   if (!loginForm.username.trim() || !loginForm.password.trim()) {
     errorMessage.value = 'Vui lòng nhập đầy đủ thông tin'
     return
   }
-  
+
   isLoading.value = true
-  
+
   try {
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // Demo login - accept any username/password for now
-    if (loginForm.username && loginForm.password) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    // Check default credentials
+    if (
+      loginForm.username === DEFAULT_USERNAME &&
+      loginForm.password === DEFAULT_PASSWORD
+    ) {
       // Store user info (in real app, this would come from API)
       localStorage.setItem('user', JSON.stringify({
         username: loginForm.username,
         isAuthenticated: true
       }))
-      
+
       // Redirect to home page
       router.push('/')
     } else {
@@ -185,6 +195,16 @@ const handleForgotPassword = () => {
   margin-bottom: 1rem;
   font-size: 0.9rem;
   border: 1px solid #fed7d7;
+}
+
+.login-hint {
+  background-color: #f8fafc;
+  color: #334155;
+  padding: 0.75rem;
+  border-radius: 6px;
+  margin-bottom: 1rem;
+  font-size: 0.9rem;
+  border: 1px solid #e2e8f0;
 }
 
 .login-button {

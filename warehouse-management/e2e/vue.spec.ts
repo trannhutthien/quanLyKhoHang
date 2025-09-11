@@ -9,9 +9,9 @@ test('redirects to login when not authenticated', async ({ page }) => {
 test('can login with credentials', async ({ page }) => {
   await page.goto('/login');
 
-  // Fill login form
-  await page.fill('#username', 'testuser');
-  await page.fill('#password', 'testpass');
+  // Fill login form (default test credentials)
+  await page.fill('#username', 'admin');
+  await page.fill('#password', '123456');
 
   // Submit form
   await page.click('button[type="submit"]');
