@@ -17,6 +17,18 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/inventory',
+      name: 'inventory',
+      component: () => import('../views/InventoryListView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/inventory/:id',
+      name: 'inventory-detail',
+      component: () => import('../views/InventoryDetailView.vue'),
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/about',
       name: 'about',
       component: () => import('../views/AboutView.vue'),
@@ -27,12 +39,19 @@ const router = createRouter({
 
 // Navigation guard to check authentication
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = localStorage.getItem('user')
+  const raw = localStorage.getItem('user')
+  let isAuthenticated = false
+  try {
+    const session = raw ? JSON.parse(raw) : null
+    isAuthenticated = !!(session && session.isAuthenticated === true)
+  } catch (e) {
+    isAuthenticated = false
+  }
 
   if (to.meta.requiresAuth && !isAuthenticated) {
-    next('/login')
+    next({ name: 'login' })
   } else if (to.name === 'login' && isAuthenticated) {
-    next('/')
+    next({ name: 'home' })
   } else {
     next()
   }
