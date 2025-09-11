@@ -9,6 +9,7 @@ onMounted(() => {
   const userData = localStorage.getItem('user')
   if (userData) {
     user.value = JSON.parse(userData)
+    
   }
 })
 
