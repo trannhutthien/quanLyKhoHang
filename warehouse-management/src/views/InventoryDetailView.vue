@@ -93,13 +93,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useInventoryStore } from '../stores/inventory'
 
 const route = useRoute()
 const store = useInventoryStore()
+
+onMounted(() => {
+  store.ensureLoaded()
+})
 const id = computed(() => String(route.params.id))
 const warehouse = computed(() => store.getWarehouseById(id.value))
 
@@ -125,14 +129,14 @@ const newItemQuantity = ref<number>(0)
 const newItemUnit = ref('')
 const newItemCategory = ref('')
 
-const onSubmitAddItem = () => {
+const onSubmitAddItem = async () => {
   if (!warehouse.value) return
   const name = newItemName.value.trim()
   const sku = newItemSku.value.trim()
   const unit = newItemUnit.value.trim()
   const qty = Number(newItemQuantity.value) || 0
   if (!name || !sku || !unit) return
-  store.addItemToWarehouse(warehouse.value.id, {
+  await store.addItemToWarehouse(warehouse.value.id, {
     name,
     sku,
     quantity: qty,

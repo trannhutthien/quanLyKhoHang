@@ -63,7 +63,7 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 import { RouterLink } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
@@ -72,15 +72,22 @@ import { useInventoryStore, type Warehouse } from '../stores/inventory'
 const inventory = useInventoryStore()
 const { warehouses } = storeToRefs(inventory)
 
+onMounted(() => {
+  // Tải dữ liệu kho + hàng hóa từ JSON Server (chỉ 1 lần)
+  // Không await để UI không bị chặn; các component sẽ tự cập nhật khi state đổi
+  inventory.ensureLoaded()
+})
+
+
 const showCreate = ref(false)
 const newName = ref('')
 const newLocation = ref('')
 
-const onSubmitCreate = () => {
+const onSubmitCreate = async () => {
   const name = newName.value.trim()
   const location = newLocation.value.trim()
   if (!name || !location) return
-  inventory.addWarehouse(name, location)
+  await inventory.addWarehouse(name, location)
   showCreate.value = false
   newName.value = ''
   newLocation.value = ''
