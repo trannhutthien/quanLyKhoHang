@@ -165,4 +165,12 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 .btn-primary:hover {
   filter: brightness(1.05);
 }
+
+/* Increase text contrast inside warehouse cards for readability */
+.warehouse-card { color: #111; }
+.warehouse-card h3 { color: #000; font-weight: 700; }
+.warehouse-card .location { color: #111; }
+.warehouse-card .stat-number { color: #000; }
+.warehouse-card .stat-label { color: #222; font-weight: 500; }
+
 </style>

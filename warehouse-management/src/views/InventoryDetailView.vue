@@ -202,4 +202,18 @@ const filteredItems = computed(() => {
 }
 
 .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+
+/* Increase text contrast to black/darker tones for readability on white background */
+.page-header h1 { color: #000; font-weight: 800; }
+.breadcrumbs, .breadcrumb, .current, .location { color: #111; }
+.breadcrumb:hover { color: #000; }
+
+.cards .card-number { color: #000; }
+.cards .card-label { color: #222; font-weight: 500; }
+
+.table-header h2 { color: #000; }
+.items-table thead th { color: #000; }
+.items-table tbody td { color: #111; }
+.items-table code { color: #000; font-weight: 600; }
+
 </style>

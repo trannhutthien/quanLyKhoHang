@@ -252,6 +252,29 @@ import AppLayout from '../components/AppLayout.vue'
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 }
 
+
+  /* Increase text contrast for readability on light background */
+  .welcome-section p {
+    color: #111;
+    font-weight: 500;
+  }
+
+  .stat-card .stat-content h3 {
+    color: #111;
+  }
+  .stat-card .stat-content p {
+    color: #222;
+    font-weight: 500;
+  }
+
+  .feature-card .feature-header h3 {
+    color: #111;
+  }
+  .feature-card p {
+    color: #222;
+    font-weight: 500;
+  }
+
 @media (max-width: 768px) {
   .welcome-section h1 {
     font-size: 2rem;
