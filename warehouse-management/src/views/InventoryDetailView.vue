@@ -25,8 +25,39 @@
       <div class="table-wrapper">
         <div class="table-header">
           <h2>Danh sách hàng hóa</h2>
-          <input v-model="keyword" type="text" class="search" placeholder="Tìm kiếm theo tên hoặc SKU..." />
+          <div class="controls">
+            <button class="btn btn-primary" @click="showAddItem = true">+ Thêm món hàng</button>
+            <input v-model="keyword" type="text" class="search" placeholder="Tìm kiếm theo tên hoặc SKU..." />
+          </div>
         </div>
+        <div v-if="showAddItem" class="modal-backdrop" @click.self="showAddItem = false">
+          <div class="modal">
+            <h3>Thêm món hàng</h3>
+            <form @submit.prevent="onSubmitAddItem">
+              <label>Tên hàng hóa</label>
+              <input v-model="newItemName" type="text" required placeholder="Ví dụ: Thùng carton" />
+              <label>SKU</label>
+              <input v-model="newItemSku" type="text" required placeholder="Ví dụ: BOX-604040" />
+              <div class="grid-2">
+                <div>
+                  <label>Số lượng</label>
+                  <input v-model.number="newItemQuantity" type="number" min="0" required placeholder="0" />
+                </div>
+                <div>
+                  <label>Đơn vị</label>
+                  <input v-model="newItemUnit" type="text" required placeholder="cái, cuộn, ..." />
+                </div>
+              </div>
+              <label>Danh mục (tùy chọn)</label>
+              <input v-model="newItemCategory" type="text" placeholder="Ví dụ: Bao bì" />
+              <div class="modal-actions">
+                <button type="button" class="btn" @click="showAddItem = false">Hủy</button>
+                <button type="submit" class="btn btn-primary">Lưu</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
         <table class="items-table">
           <thead>
             <tr>
@@ -85,6 +116,37 @@ const filteredItems = computed(() => {
     i.name.toLowerCase().includes(k) || i.sku.toLowerCase().includes(k)
   )
 })
+
+// State & handler for adding item
+const showAddItem = ref(false)
+const newItemName = ref('')
+const newItemSku = ref('')
+const newItemQuantity = ref<number>(0)
+const newItemUnit = ref('')
+const newItemCategory = ref('')
+
+const onSubmitAddItem = () => {
+  if (!warehouse.value) return
+  const name = newItemName.value.trim()
+  const sku = newItemSku.value.trim()
+  const unit = newItemUnit.value.trim()
+  const qty = Number(newItemQuantity.value) || 0
+  if (!name || !sku || !unit) return
+  store.addItemToWarehouse(warehouse.value.id, {
+    name,
+    sku,
+    quantity: qty,
+    unit,
+    category: newItemCategory.value.trim() || undefined
+  })
+  showAddItem.value = false
+  newItemName.value = ''
+  newItemSku.value = ''
+  newItemQuantity.value = 0
+  newItemUnit.value = ''
+  newItemCategory.value = ''
+}
+
 </script>
 
 <style scoped>
@@ -215,5 +277,17 @@ const filteredItems = computed(() => {
 .items-table thead th { color: #000; }
 .items-table tbody td { color: #111; }
 .items-table code { color: #000; font-weight: 600; }
+
+
+/* Controls + Modal styles */
+.table-header .controls { display: flex; align-items: center; gap: 0.5rem; }
+.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: grid; place-items: center; z-index: 1000; }
+.modal { width: min(520px, 92vw); background: #fff; border: 1px solid var(--color-border); border-radius: 12px; padding: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15); }
+.modal h3 { margin: 0 0 0.75rem 0; color: #000; }
+.modal form { display: grid; gap: 0.75rem; }
+.modal form label { font-weight: 600; color: #111; }
+.modal form input { padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; }
+.modal .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
 
 </style>

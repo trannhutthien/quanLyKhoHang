@@ -61,6 +61,28 @@ export const useInventoryStore = defineStore('inventory', {
       this.warehouses.push({ id, name, location, items: [] })
       return id
     },
+    addItemToWarehouse(warehouseId: string, payload: { name: string; sku: string; quantity: number; unit: string; category?: string }) {
+      const w = this.warehouses.find(w => w.id === warehouseId)
+      if (!w) return false
+      const baseSlug = payload.sku ? this._slugify(payload.sku) : this._slugify(payload.name) || 'sp'
+      let base = baseSlug || 'sp'
+      if (!base.startsWith('sp-')) base = `sp-${base}`
+      let id = base
+      let i = 1
+      const allItems = this.warehouses.flatMap(x => x.items)
+      while (allItems.some(it => it.id === id)) {
+        id = `${base}-${i++}`
+      }
+      w.items.push({
+        id,
+        name: payload.name,
+        sku: payload.sku,
+        quantity: Number(payload.quantity) || 0,
+        unit: payload.unit,
+        category: payload.category
+      })
+      return id
+    },
     _slugify(text: string) {
       return text
         .toLowerCase()
