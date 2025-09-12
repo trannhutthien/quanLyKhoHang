@@ -6,6 +6,26 @@
           <h1>Kho hàng</h1>
           <p>Danh sách các kho hàng và tổng quan hàng hóa</p>
         </div>
+        <div class="actions">
+          <button class="btn btn-primary" @click="showCreate = true">+ Thêm kho hàng</button>
+
+      <div v-if="showCreate" class="modal-backdrop" @click.self="showCreate = false">
+        <div class="modal">
+          <h3>Thêm kho hàng</h3>
+          <form @submit.prevent="onSubmitCreate">
+            <label>Tên kho hàng</label>
+            <input v-model="newName" type="text" required placeholder="Ví dụ: Kho C" />
+            <label>Địa chỉ</label>
+            <input v-model="newLocation" type="text" required placeholder="Ví dụ: Đà Nẵng" />
+            <div class="modal-actions">
+              <button type="button" class="btn" @click="showCreate = false">Hủy</button>
+              <button type="submit" class="btn btn-primary">Lưu</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+        </div>
       </header>
 
       <div class="warehouses-grid">
@@ -38,16 +58,34 @@
       </div>
     </section>
   </AppLayout>
+
 </template>
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
+import { ref } from 'vue'
+
 import { RouterLink } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
 import { useInventoryStore, type Warehouse } from '../stores/inventory'
 
 const inventory = useInventoryStore()
 const { warehouses } = storeToRefs(inventory)
+
+const showCreate = ref(false)
+const newName = ref('')
+const newLocation = ref('')
+
+const onSubmitCreate = () => {
+  const name = newName.value.trim()
+  const location = newLocation.value.trim()
+  if (!name || !location) return
+  inventory.addWarehouse(name, location)
+  showCreate.value = false
+  newName.value = ''
+  newLocation.value = ''
+}
+
 
 const totalItems = (w: Warehouse) => inventory.totalItemsInWarehouse(w)
 const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
@@ -161,6 +199,33 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
 }
+
+
+/* Header actions & modal styles */
+.page-header { display: flex; align-items: center; justify-content: space-between; }
+.actions { display: flex; align-items: center; }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: grid;
+  place-items: center;
+  z-index: 1000;
+}
+.modal {
+  width: min(480px, 92vw);
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+.modal h3 { margin: 0 0 0.75rem 0; color: #000; }
+.modal form { display: grid; gap: 0.75rem; }
+.modal form label { font-weight: 600; color: #111; }
+.modal form input { padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
 
 .btn-primary:hover {
   filter: brightness(1.05);

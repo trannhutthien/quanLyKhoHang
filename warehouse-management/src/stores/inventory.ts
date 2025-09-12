@@ -49,5 +49,24 @@ export const useInventoryStore = defineStore('inventory', {
     getWarehouseById: (state) => (id: string) => state.warehouses.find(w => w.id === id),
     totalItemsInWarehouse: () => (warehouse: Warehouse) => warehouse.items.length,
     totalQuantityInWarehouse: () => (warehouse: Warehouse) => warehouse.items.reduce((sum, i) => sum + i.quantity, 0),
+  },
+  actions: {
+    addWarehouse(name: string, location: string) {
+      const base = this._slugify(name) || `kho-${Date.now()}`
+      let id = base
+      let i = 1
+      while (this.warehouses.some(w => w.id === id)) {
+        id = `${base}-${i++}`
+      }
+      this.warehouses.push({ id, name, location, items: [] })
+      return id
+    },
+    _slugify(text: string) {
+      return text
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)+/g, '')
+    }
   }
 })
