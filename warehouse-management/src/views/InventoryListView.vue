@@ -9,6 +9,7 @@
         <div class="actions">
           <button class="btn btn-primary" @click="showCreate = true">+ Thêm kho hàng</button>
 
+
       <div v-if="showCreate" class="modal-backdrop" @click.self="showCreate = false">
         <div class="modal">
           <h3>Thêm kho hàng</h3>
@@ -22,6 +23,8 @@
             <div v-if="createErrors.general" class="error-message">{{ createErrors.general }}</div>
             <div class="modal-actions">
               <button type="button" class="btn" @click="showCreate = false" :disabled="createLoading">Hủy</button>
+
+
               <button type="submit" class="btn btn-primary" :disabled="createLoading">
                 <span v-if="createLoading">Đang lưu...</span>
                 <span v-else>Lưu</span>
@@ -202,6 +205,8 @@ const onSubmitAuthDelete = async () => {
   }
 }
 
+
+
 const cancelFinalConfirm = () => { showFinalConfirm.value = false }
 const confirmFinalDelete = async () => {
   if (!deletingWarehouseId.value) return
@@ -372,6 +377,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
   color: #fff;
 }
 .btn-danger:hover { filter: brightness(0.95); }
+
+
 
 
 /* Header actions & modal styles */
