@@ -6,11 +6,6 @@
       "location": "Hà Nội"
     },
     {
-      "id": "kho-b",
-      "name": "Kho B",
-      "location": "TP. Hồ Chí Minh"
-    },
-    {
       "id": "kho-c",
       "name": "kho c",
       "location": "tra vinh"
@@ -45,63 +40,21 @@
       "category": "An toàn"
     },
     {
-      "id": "sp-004",
-      "warehouseId": "kho-b",
-      "name": "Găng tay cao su",
-      "sku": "GTC-01",
-      "quantity": 200,
-      "unit": "đôi",
-      "category": "An toàn"
-    },
-    {
-      "id": "sp-005",
-      "warehouseId": "kho-b",
-      "name": "Máy quét mã vạch",
-      "sku": "BARC-SCAN",
-      "quantity": 15,
-      "unit": "cái",
-      "category": "Thiết bị"
-    },
-    {
-      "id": "sp-006",
-      "warehouseId": "kho-b",
-      "name": "Pallet nhựa",
-      "sku": "PAL-PLS",
-      "quantity": 75,
-      "unit": "cái",
-      "category": "Kho bãi"
-    },
-    {
       "id": "sp-md01",
       "warehouseId": "kho-a",
       "name": "muc dau",
       "sku": "md01",
       "quantity": 5,
       "unit": "chay"
-    },
-    {
-      "id": "sp-bcc02",
-      "warehouseId": "kho-b",
-      "name": "bột ca cao",
-      "sku": "bcc02",
-      "quantity": 20,
-      "unit": "bịch",
-      "category": "nguyên liệu chính"
-    },
-    {
-      "id": "sp-bkm003",
-      "warehouseId": "kho-b",
-      "name": "bột khoai môn",
-      "sku": "bkm003",
-      "quantity": 10,
-      "unit": "bịch",
-      "category": "nguyên liệu chính",
-      "dateAdded": "2025-09-14",
-      "expiry": "2025-09-14"
     }
-  ]
-,
+  ],
   "users": [
-    { "id": "u-1", "username": "admin", "password": "123456", "name": "Quản trị viên", "role": "admin" }
+    {
+      "id": "u-1",
+      "username": "admin",
+      "password": "123456",
+      "name": "Quản trị viên",
+      "role": "admin"
+    }
   ]
 }

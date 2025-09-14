@@ -14,16 +14,42 @@
           <h3>Thêm kho hàng</h3>
           <form @submit.prevent="onSubmitCreate">
             <label>Tên kho hàng</label>
-            <input v-model="newName" type="text" required placeholder="Ví dụ: Kho C" />
+            <input v-model="newName" type="text" placeholder="Ví dụ: Kho C" :disabled="createLoading" />
+            <div v-if="createErrors.name" class="error-message">{{ createErrors.name }}</div>
             <label>Địa chỉ</label>
-            <input v-model="newLocation" type="text" required placeholder="Ví dụ: Đà Nẵng" />
+            <input v-model="newLocation" type="text" placeholder="Ví dụ: Đà Nẵng" :disabled="createLoading" />
+            <div v-if="createErrors.location" class="error-message">{{ createErrors.location }}</div>
+            <div v-if="createErrors.general" class="error-message">{{ createErrors.general }}</div>
             <div class="modal-actions">
-              <button type="button" class="btn" @click="showCreate = false">Hủy</button>
-              <button type="submit" class="btn btn-primary">Lưu</button>
+              <button type="button" class="btn" @click="showCreate = false" :disabled="createLoading">Hủy</button>
+              <button type="submit" class="btn btn-primary" :disabled="createLoading">
+                <span v-if="createLoading">Đang lưu...</span>
+                <span v-else>Lưu</span>
+              </button>
             </div>
           </form>
         </div>
       </div>
+
+      <!-- Modal xác thực xóa kho -->
+      <div v-if="showDeleteAuth" class="modal-backdrop" @click.self="cancelDeleteAuth">
+        <div class="modal">
+          <h3>Xác nhận xóa kho hàng</h3>
+          <p>Nhập tài khoản và mật khẩu để xác nhận thao tác này.</p>
+          <form @submit.prevent="onSubmitAuthDelete">
+            <label>Tên đăng nhập</label>
+            <input v-model="authUsername" type="text" required :disabled="authLoading" />
+            <label>Mật khẩu</label>
+            <input v-model="authPassword" type="password" required :disabled="authLoading" />
+            <div v-if="authError" class="error-message">{{ authError }}</div>
+            <div class="modal-actions">
+              <button type="button" class="btn" @click="cancelDeleteAuth" :disabled="authLoading">Hủy</button>
+              <button type="submit" class="btn btn-danger" :disabled="authLoading">Xóa</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
 
         </div>
       </header>
@@ -64,10 +90,15 @@
 
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 
 import { RouterLink } from 'vue-router'
 import AppLayout from '../components/AppLayout.vue'
+import axios from 'axios'
+const API_BASE = (typeof window !== 'undefined' && window.location?.hostname)
+  ? `http://${window.location.hostname}:3001`
+  : 'http://localhost:3001'
+
 import { useInventoryStore, type Warehouse } from '../stores/inventory'
 
 const inventory = useInventoryStore()
@@ -79,26 +110,92 @@ onMounted(() => {
   inventory.ensureLoaded()
 })
 
-const onDeleteWarehouse = async (id: string) => {
+// Xác thực trước khi xóa kho
+const showDeleteAuth = ref(false)
+const deletingWarehouseId = ref<string | null>(null)
+const authUsername = ref('')
+const authPassword = ref('')
+const authError = ref('')
+const authLoading = ref(false)
+
+
+const onDeleteWarehouse = (id: string) => {
   if (!id) return
-  if (!confirm('Bạn có chắc chắn muốn xóa kho hàng này? Tất cả món hàng thuộc kho cũng sẽ bị xóa.')) return
-  await inventory.deleteWarehouse(id)
+  deletingWarehouseId.value = id
+  authUsername.value = ''
+  authPassword.value = ''
+  authError.value = ''
+  showDeleteAuth.value = true
 }
+
+const cancelDeleteAuth = () => {
+  showDeleteAuth.value = false
+  deletingWarehouseId.value = null
+  authUsername.value = ''
+  authPassword.value = ''
+  authError.value = ''
+}
+
+const onSubmitAuthDelete = async () => {
+  if (!deletingWarehouseId.value) return
+  authError.value = ''
+  if (!authUsername.value.trim() || !authPassword.value) {
+    authError.value = 'Vui lòng nhập đầy đủ tài khoản và mật khẩu'
+    return
+  }
+  authLoading.value = true
+  try {
+    const resp = await axios.get(`${API_BASE}/users`, {
+      params: { username: authUsername.value.trim(), password: authPassword.value }
+    })
+    const users = Array.isArray(resp.data) ? resp.data : []
+    if (users.length === 0) {
+      authError.value = 'Tài khoản hoặc mật khẩu không đúng'
+      return
+    }
+    await inventory.deleteWarehouse(deletingWarehouseId.value)
+    cancelDeleteAuth()
+  } catch (e) {
+    console.error(e)
+    authError.value = 'Không thể kết nối tới máy chủ. Hãy chạy JSON Server.'
+  } finally {
+    authLoading.value = false
+  }
+}
+
 
 
 const showCreate = ref(false)
 const newName = ref('')
 const newLocation = ref('')
+const createLoading = ref(false)
+const createErrors = reactive<{ name: string; location: string; general: string }>({ name: '', location: '', general: '' })
 
 const onSubmitCreate = async () => {
+  createErrors.name = ''
+  createErrors.location = ''
+  createErrors.general = ''
   const name = newName.value.trim()
   const location = newLocation.value.trim()
-  if (!name || !location) return
-  const id = await inventory.addWarehouse(name, location)
-  if (!id) return
-  showCreate.value = false
-  newName.value = ''
-  newLocation.value = ''
+  if (!name) createErrors.name = 'Vui lòng nhập tên kho hàng'
+  if (!location) createErrors.location = 'Vui lòng nhập địa chỉ kho'
+  if (createErrors.name || createErrors.location) return
+  createLoading.value = true
+  try {
+    const id = await inventory.addWarehouse(name, location)
+    if (!id) {
+      createErrors.general = 'Không thể lưu kho hàng. Vui lòng thử lại hoặc kiểm tra JSON Server.'
+      return
+    }
+    showCreate.value = false
+    newName.value = ''
+    newLocation.value = ''
+  } catch (e) {
+    console.error(e)
+    createErrors.general = 'Có lỗi xảy ra khi lưu. Vui lòng thử lại.'
+  } finally {
+    createLoading.value = false
+  }
 }
 
 
@@ -247,6 +344,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 .modal form { display: grid; gap: 0.75rem; }
 .modal form label { font-weight: 600; color: #111; }
 .modal form input { padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .error-message { background:#fee; color:#c53030; border:1px solid #fed7d7; padding:0.5rem; border-radius:6px; font-size:0.9rem; }
+
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
 
 .btn-primary:hover {
