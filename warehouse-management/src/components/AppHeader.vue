@@ -39,10 +39,10 @@
             </router-link>
           </li>
           <li class="nav-item">
-            <button class="nav-link nav-button" @click="showTransferModal = true">
+            <router-link to="/transfer" class="nav-link">
               <span class="nav-icon">↔️</span>
               Xuất/Nhập
-            </button>
+            </router-link>
           </li>
 
         </ul>
@@ -72,23 +72,6 @@
         <span class="hamburger"></span>
         <span class="hamburger"></span>
       </button>
-    </div>
-
-    <!-- Transfer Modal in Header -->
-    <div v-if="showTransferModal" class="modal-backdrop" @click.self="showTransferModal = false">
-      <div class="modal">
-        <h3>Xuất/Nhập hàng</h3>
-        <div class="transfer-actions">
-          <button class="btn" @click="onTransferSelect('import')">Nhập hàng</button>
-          <button class="btn btn-danger" @click="onTransferSelect('export')">Xuất hàng</button>
-        </div>
-        <p v-if="transferMode" class="transfer-note">
-          Bạn đã chọn: {{ transferMode === 'import' ? 'Nhập hàng' : 'Xuất hàng' }}
-        </p>
-        <div class="modal-actions">
-          <button type="button" class="btn" @click="showTransferModal = false">Đóng</button>
-        </div>
-      </div>
     </div>
 
 
@@ -154,11 +137,6 @@ const closeMobileMenu = () => {
   isMobileMenuOpen.value = false
 }
 
-// Transfer state in header
-const showTransferModal = ref(false)
-type TransferMode = 'import' | 'export' | null
-const transferMode = ref<TransferMode>(null)
-const onTransferSelect = (mode: 'import' | 'export') => { transferMode.value = mode }
 
 </script>
 
@@ -402,16 +380,6 @@ const onTransferSelect = (mode: 'import' | 'export') => { transferMode.value = m
 }
 
 
-/* Header transfer modal + button styling */
-.nav-button { background: none; border: none; cursor: pointer; font: inherit; color: inherit; }
-.modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); display: grid; place-items: center; z-index: 1200; }
-.modal { width: min(480px, 92vw); background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px; padding: 1rem; box-shadow: 0 10px 30px rgba(0,0,0,0.15); color: #000; }
-.modal h3 { margin: 0 0 0.75rem 0; color: #000; }
-.transfer-actions { display: flex; gap: 0.5rem; justify-content: center; margin: 0.5rem 0 0.75rem; }
-.transfer-note { color: #000; margin: 0.25rem 0 0; text-align: center; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
-.btn { appearance: none; border: none; padding: 0.6rem 1rem; border-radius: 8px; cursor: pointer; background: #e2e8f0; color: #000; }
-.btn.btn-danger { background: #ef4444; color: #fff; }
 
 @media (max-width: 480px) {
   .logo-text {

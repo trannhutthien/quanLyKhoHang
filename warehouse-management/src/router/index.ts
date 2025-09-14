@@ -34,6 +34,13 @@ const router = createRouter({
       component: () => import('../views/AboutView.vue'),
       meta: { requiresAuth: true }
     },
+    {
+      path: '/transfer',
+      name: 'transfer',
+      component: () => import('../views/TransferView.vue'),
+      meta: { requiresAuth: true }
+    },
+
   ],
 })
 
