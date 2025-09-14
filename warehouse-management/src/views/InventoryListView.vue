@@ -415,9 +415,10 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 
 /* Increase text contrast inside warehouse cards for readability */
 .warehouse-card { color: #111; }
-.warehouse-card h2 { color: #000; font-weight: 700; }
+/* Support both h2 and h3 in case the heading tag varies */
+.warehouse-card h2, .warehouse-card h3 { color: #fff; font-weight: 700; }
 .warehouse-card p { color: #000; }
-.warehouse-card .location { color: #111; }
+.warehouse-card .location { color: #fff; }
 .warehouse-card .stat-number { color: #000; }
 .warehouse-card .stat-label { color: #222; font-weight: 500; }
 

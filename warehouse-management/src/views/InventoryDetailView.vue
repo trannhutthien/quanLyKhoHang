@@ -290,10 +290,12 @@ const onSubmitAddItem = async () => {
 
 .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
 
-/* Increase text contrast to black/darker tones for readability on white background */
-.page-header h1 { color: #000; font-weight: 800; }
-.breadcrumbs, .breadcrumb, .current, .location { color: #111; }
-.breadcrumb:hover { color: #000; }
+/* Override to white text per request */
+.page-header h1 { color: #fff; font-weight: 800; }
+.breadcrumbs, .breadcrumb, .current, .location { color: #fff; }
+.breadcrumbs .sep { color: #fff; }
+.breadcrumb:hover { color: #fff; }
+.location span { color: #fff; }
 
 .cards .card-number { color: #000; }
 .cards .card-label { color: #222; font-weight: 500; }
