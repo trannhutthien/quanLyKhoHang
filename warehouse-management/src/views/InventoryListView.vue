@@ -32,6 +32,7 @@
       </div>
 
       <!-- Modal xác thực xóa kho -->
+
       <div v-if="showDeleteAuth" class="modal-backdrop" @click.self="cancelDeleteAuth">
         <div class="modal">
           <h3>Xác nhận xóa kho hàng</h3>
@@ -39,6 +40,9 @@
           <form @submit.prevent="onSubmitAuthDelete">
             <label>Tên đăng nhập</label>
             <input v-model="authUsername" type="text" required :disabled="authLoading" />
+            <label>Tên kho hàng</label>
+            <input v-model="authWarehouseName" type="text" required :disabled="authLoading" />
+
             <label>Mật khẩu</label>
             <input v-model="authPassword" type="password" required :disabled="authLoading" />
             <div v-if="authError" class="error-message">{{ authError }}</div>
@@ -117,6 +121,8 @@ const authUsername = ref('')
 const authPassword = ref('')
 const authError = ref('')
 const authLoading = ref(false)
+const authWarehouseName = ref('')
+
 
 
 const onDeleteWarehouse = (id: string) => {
@@ -124,6 +130,7 @@ const onDeleteWarehouse = (id: string) => {
   deletingWarehouseId.value = id
   authUsername.value = ''
   authPassword.value = ''
+  authWarehouseName.value = ''
   authError.value = ''
   showDeleteAuth.value = true
 }
@@ -133,18 +140,34 @@ const cancelDeleteAuth = () => {
   deletingWarehouseId.value = null
   authUsername.value = ''
   authPassword.value = ''
+  authWarehouseName.value = ''
   authError.value = ''
 }
 
 const onSubmitAuthDelete = async () => {
   if (!deletingWarehouseId.value) return
   authError.value = ''
+  // Kiểm tra nhập đủ cả 3 trường
+  if (!authWarehouseName.value.trim()) {
+    authError.value = 'Vui lòng nhập tên kho hàng cần xóa'
+    return
+  }
   if (!authUsername.value.trim() || !authPassword.value) {
     authError.value = 'Vui lòng nhập đầy đủ tài khoản và mật khẩu'
     return
   }
   authLoading.value = true
   try {
+    // 1) Kiểm tra tên kho từ db.json
+    const wid = deletingWarehouseId.value
+    const wResp = await axios.get(`${API_BASE}/warehouses/${encodeURIComponent(wid)}`)
+    const currentName = (wResp?.data?.name || '').trim()
+    if (!currentName || currentName !== authWarehouseName.value.trim()) {
+      authError.value = 'Tên kho hàng không khớp'
+      return
+    }
+
+    // 2) Xác thực user
     const resp = await axios.get(`${API_BASE}/users`, {
       params: { username: authUsername.value.trim(), password: authPassword.value }
     })
@@ -153,6 +176,8 @@ const onSubmitAuthDelete = async () => {
       authError.value = 'Tài khoản hoặc mật khẩu không đúng'
       return
     }
+
+    // 3) Thực hiện xóa
     await inventory.deleteWarehouse(deletingWarehouseId.value)
     cancelDeleteAuth()
   } catch (e) {
