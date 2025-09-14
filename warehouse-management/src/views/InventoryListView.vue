@@ -54,6 +54,19 @@
         </div>
       </div>
 
+      <!-- Lớp xác nhận cuối cùng đè lên modal xóa -->
+      <div v-if="showFinalConfirm" class="modal-backdrop confirm" @click.self="cancelFinalConfirm">
+        <div class="modal">
+          <h3>Cảnh báo</h3>
+          <p>Bạn sắp xóa kho hàng này và toàn bộ hàng hóa liên quan. Thao tác không thể hoàn tác.</p>
+          <div class="modal-actions">
+            <button type="button" class="btn" @click="cancelFinalConfirm" :disabled="authLoading">Quay lại</button>
+            <button type="button" class="btn btn-danger" @click="confirmFinalDelete" :disabled="authLoading">Xóa</button>
+          </div>
+        </div>
+      </div>
+
+
 
         </div>
       </header>
@@ -122,6 +135,7 @@ const authPassword = ref('')
 const authError = ref('')
 const authLoading = ref(false)
 const authWarehouseName = ref('')
+const showFinalConfirm = ref(false)
 
 
 
@@ -177,9 +191,9 @@ const onSubmitAuthDelete = async () => {
       return
     }
 
-    // 3) Thực hiện xóa
-    await inventory.deleteWarehouse(deletingWarehouseId.value)
-    cancelDeleteAuth()
+    // 3) Hiển thị xác nhận cuối cùng trước khi xóa
+    showFinalConfirm.value = true
+    return
   } catch (e) {
     console.error(e)
     authError.value = 'Không thể kết nối tới máy chủ. Hãy chạy JSON Server.'
@@ -188,7 +202,22 @@ const onSubmitAuthDelete = async () => {
   }
 }
 
-
+const cancelFinalConfirm = () => { showFinalConfirm.value = false }
+const confirmFinalDelete = async () => {
+  if (!deletingWarehouseId.value) return
+  authError.value = ''
+  authLoading.value = true
+  try {
+    await inventory.deleteWarehouse(deletingWarehouseId.value)
+    cancelFinalConfirm()
+    cancelDeleteAuth()
+  } catch (e) {
+    console.error(e)
+    authError.value = 'Không thể xóa kho. Vui lòng thử lại.'
+  } finally {
+    authLoading.value = false
+  }
+}
 
 const showCreate = ref(false)
 const newName = ref('')
@@ -357,6 +386,9 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
   place-items: center;
   z-index: 1000;
 }
+
+.modal-backdrop.confirm { z-index: 1100; }
+
 .modal {
   width: min(480px, 92vw);
   background: #fff;
