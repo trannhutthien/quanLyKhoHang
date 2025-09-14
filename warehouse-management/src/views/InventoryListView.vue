@@ -35,7 +35,7 @@
 
       <div v-if="showDeleteAuth" class="modal-backdrop" @click.self="cancelDeleteAuth">
         <div class="modal delete-auth">
-          <h3>Xác nhận xóa kho hàng</h3>
+          <h2>Xác nhận xóa kho hàng</h2>
           <p>Nhập tài khoản và mật khẩu để xác nhận thao tác này.</p>
           <form @submit.prevent="onSubmitAuthDelete">
             <label>Tên đăng nhập</label>
@@ -57,7 +57,7 @@
       <!-- Lớp xác nhận cuối cùng đè lên modal xóa -->
       <div v-if="showFinalConfirm" class="modal-backdrop confirm" @click.self="cancelFinalConfirm">
         <div class="modal">
-          <h3>Cảnh báo</h3>
+          <h2>Cảnh báo</h2>
           <p>Bạn sắp xóa kho hàng này và toàn bộ hàng hóa liên quan. Thao tác không thể hoàn tác.</p>
           <div class="modal-actions">
             <button type="button" class="btn" @click="cancelFinalConfirm" :disabled="authLoading">Quay lại</button>
@@ -398,7 +398,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
   padding: 1rem;
   box-shadow: 0 10px 30px rgba(0,0,0,0.15);
 }
-.modal h3 { margin: 0 0 0.75rem 0; color: #000; }
+.modal h2 { margin: 0 0 0.75rem 0; color: #000; }
+.modal p{color:#000}
 .modal form { display: grid; gap: 0.75rem; }
 .modal form label { font-weight: 600; color: #111; }
 .modal form input { padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; }
@@ -414,7 +415,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 
 /* Increase text contrast inside warehouse cards for readability */
 .warehouse-card { color: #111; }
-.warehouse-card h3 { color: #000; font-weight: 700; }
+.warehouse-card h2 { color: #000; font-weight: 700; }
+.warehouse-card p { color: #000; }
 .warehouse-card .location { color: #111; }
 .warehouse-card .stat-number { color: #000; }
 .warehouse-card .stat-label { color: #222; font-weight: 500; }
