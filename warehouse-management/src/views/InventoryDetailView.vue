@@ -50,6 +50,16 @@
               </div>
               <label>Danh mục (tùy chọn)</label>
               <input v-model="newItemCategory" type="text" placeholder="Ví dụ: Bao bì" />
+              <div class="grid-2">
+                <div>
+                  <label>Ngày thêm</label>
+                  <input v-model="newItemDateAdded" type="date" />
+                </div>
+                <div>
+                  <label>Hạn sử dụng</label>
+                  <input v-model="newItemExpiry" type="date" />
+                </div>
+              </div>
               <div class="modal-actions">
                 <button type="button" class="btn" @click="showAddItem = false">Hủy</button>
                 <button type="submit" class="btn btn-primary">Lưu</button>
@@ -65,6 +75,8 @@
               <th>SKU</th>
               <th class="text-right">Số lượng</th>
               <th>Đơn vị</th>
+              <th>Ngày thêm</th>
+              <th>Hạn sử dụng</th>
               <th>Danh mục</th>
             </tr>
           </thead>
@@ -74,6 +86,8 @@
               <td><code>{{ item.sku }}</code></td>
               <td class="text-right">{{ item.quantity }}</td>
               <td>{{ item.unit }}</td>
+              <td>{{ item.dateAdded || '-' }}</td>
+              <td>{{ item.expiry || '-' }}</td>
               <td>{{ item.category || '-' }}</td>
             </tr>
           </tbody>
@@ -128,6 +142,8 @@ const newItemSku = ref('')
 const newItemQuantity = ref<number>(0)
 const newItemUnit = ref('')
 const newItemCategory = ref('')
+const newItemDateAdded = ref<string>(new Date().toISOString().slice(0,10))
+const newItemExpiry = ref('')
 
 const onSubmitAddItem = async () => {
   if (!warehouse.value) return
@@ -141,7 +157,9 @@ const onSubmitAddItem = async () => {
     sku,
     quantity: qty,
     unit,
-    category: newItemCategory.value.trim() || undefined
+    category: newItemCategory.value.trim() || undefined,
+    dateAdded: newItemDateAdded.value || undefined,
+    expiry: newItemExpiry.value || undefined
   })
   if (!id) return
   showAddItem.value = false
@@ -150,6 +168,8 @@ const onSubmitAddItem = async () => {
   newItemQuantity.value = 0
   newItemUnit.value = ''
   newItemCategory.value = ''
+  newItemDateAdded.value = new Date().toISOString().slice(0,10)
+  newItemExpiry.value = ''
 }
 
 </script>
