@@ -87,7 +87,8 @@ const onSubmitCreate = async () => {
   const name = newName.value.trim()
   const location = newLocation.value.trim()
   if (!name || !location) return
-  await inventory.addWarehouse(name, location)
+  const id = await inventory.addWarehouse(name, location)
+  if (!id) return
   showCreate.value = false
   newName.value = ''
   newLocation.value = ''

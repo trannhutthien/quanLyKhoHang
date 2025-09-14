@@ -61,15 +61,19 @@ export const useInventoryStore = defineStore('inventory', {
       this.loaded = true
     },
     async fetchWarehousesWithItems() {
-      const ws = await axios.get(`${API_BASE}/warehouses`)
-      const itemsResp = await axios.get(`${API_BASE}/items`)
-      const itemsBy: Record<string, InventoryItem[]> = {}
-      for (const it of itemsResp.data as any[]) {
-        const wid = (it as any).warehouseId
-        if (!itemsBy[wid]) itemsBy[wid] = []
-        itemsBy[wid].push({ id: it.id, name: it.name, sku: it.sku, quantity: Number(it.quantity) || 0, unit: it.unit, category: it.category })
+      try {
+        const ws = await axios.get(`${API_BASE}/warehouses`)
+        const itemsResp = await axios.get(`${API_BASE}/items`)
+        const itemsBy: Record<string, InventoryItem[]> = {}
+        for (const it of itemsResp.data as any[]) {
+          const wid = (it as any).warehouseId
+          if (!itemsBy[wid]) itemsBy[wid] = []
+          itemsBy[wid].push({ id: it.id, name: it.name, sku: it.sku, quantity: Number(it.quantity) || 0, unit: it.unit, category: it.category })
+        }
+        this.warehouses = (ws.data as any[]).map(w => ({ id: w.id, name: w.name, location: w.location, items: itemsBy[w.id] || [] }))
+      } catch (err) {
+        console.error('Không tải được dữ liệu từ API', err)
       }
-      this.warehouses = (ws.data as any[]).map(w => ({ id: w.id, name: w.name, location: w.location, items: itemsBy[w.id] || [] }))
     },
 
     async addWarehouse(name: string, location: string) {
@@ -79,9 +83,15 @@ export const useInventoryStore = defineStore('inventory', {
       while (this.warehouses.some(w => w.id === id)) {
         id = `${base}-${i++}`
       }
-      await axios.post(`${API_BASE}/warehouses`, { id, name, location })
-      this.warehouses.push({ id, name, location, items: [] })
-      return id
+      try {
+        await axios.post(`${API_BASE}/warehouses`, { id, name, location })
+        this.warehouses.push({ id, name, location, items: [] })
+        return id
+      } catch (err) {
+        console.error('Lỗi tạo kho hàng', err)
+        if (typeof window !== 'undefined') alert('Không thể lưu kho hàng vào API. Hãy kiểm tra JSON Server đang chạy.')
+        return false as any
+      }
     },
     async addItemToWarehouse(warehouseId: string, payload: { name: string; sku: string; quantity: number; unit: string; category?: string }) {
       const w = this.warehouses.find(w => w.id === warehouseId)
@@ -95,17 +105,23 @@ export const useInventoryStore = defineStore('inventory', {
       while (allItems.some(it => it.id === id)) {
         id = `${base}-${i++}`
       }
-      await axios.post(`${API_BASE}/items`, {
-        id,
-        warehouseId,
-        name: payload.name,
-        sku: payload.sku,
-        quantity: Number(payload.quantity) || 0,
-        unit: payload.unit,
-        category: payload.category
-      })
-      w.items.push({ id, name: payload.name, sku: payload.sku, quantity: Number(payload.quantity) || 0, unit: payload.unit, category: payload.category })
-      return id
+      try {
+        await axios.post(`${API_BASE}/items`, {
+          id,
+          warehouseId,
+          name: payload.name,
+          sku: payload.sku,
+          quantity: Number(payload.quantity) || 0,
+          unit: payload.unit,
+          category: payload.category
+        })
+        w.items.push({ id, name: payload.name, sku: payload.sku, quantity: Number(payload.quantity) || 0, unit: payload.unit, category: payload.category })
+        return id
+      } catch (err) {
+        console.error('Lỗi thêm món hàng', err)
+        if (typeof window !== 'undefined') alert('Không thể lưu món hàng vào API. Hãy kiểm tra JSON Server đang chạy.')
+        return false as any
+      }
     },
     _slugify(text: string) {
       return text

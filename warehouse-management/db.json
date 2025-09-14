@@ -9,6 +9,11 @@
       "id": "kho-b",
       "name": "Kho B",
       "location": "TP. Hồ Chí Minh"
+    },
+    {
+      "id": "kho-c",
+      "name": "kho c",
+      "location": "tra vinh"
     }
   ],
   "items": [

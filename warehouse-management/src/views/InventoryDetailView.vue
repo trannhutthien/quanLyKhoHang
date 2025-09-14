@@ -136,13 +136,14 @@ const onSubmitAddItem = async () => {
   const unit = newItemUnit.value.trim()
   const qty = Number(newItemQuantity.value) || 0
   if (!name || !sku || !unit) return
-  await store.addItemToWarehouse(warehouse.value.id, {
+  const id = await store.addItemToWarehouse(warehouse.value.id, {
     name,
     sku,
     quantity: qty,
     unit,
     category: newItemCategory.value.trim() || undefined
   })
+  if (!id) return
   showAddItem.value = false
   newItemName.value = ''
   newItemSku.value = ''
