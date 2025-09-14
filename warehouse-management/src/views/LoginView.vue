@@ -35,9 +35,6 @@
           {{ errorMessage }}
         </div>
 
-        <div class="login-hint">
-          <strong>Tài khoản test:</strong> admin / 123456
-        </div>
 
         <button type="submit" class="login-button" :disabled="isLoading">
           <span v-if="isLoading">Đang đăng nhập...</span>
@@ -55,11 +52,13 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
+import axios from 'axios'
 
 const router = useRouter()
 
-const DEFAULT_USERNAME = 'admin'
-const DEFAULT_PASSWORD = '123456'
+const API_BASE = (typeof window !== 'undefined' && window.location?.hostname)
+  ? `http://${window.location.hostname}:3001`
+  : 'http://localhost:3001'
 
 // Form data
 const loginForm = reactive({
@@ -85,27 +84,25 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 500))
-
-    // Check default credentials
-    if (
-      loginForm.username === DEFAULT_USERNAME &&
-      loginForm.password === DEFAULT_PASSWORD
-    ) {
-      // Store user info (in real app, this would come from API)
+    const resp = await axios.get(`${API_BASE}/users`, {
+      params: { username: loginForm.username, password: loginForm.password }
+    })
+    const users = Array.isArray(resp.data) ? resp.data : []
+    if (users.length > 0) {
+      const u = users[0]
       localStorage.setItem('user', JSON.stringify({
-        username: loginForm.username,
+        id: u.id,
+        username: u.username,
+        name: u.name,
+        role: u.role,
         isAuthenticated: true
       }))
-
-      // Redirect to home page
       router.push('/')
     } else {
       errorMessage.value = 'Tên đăng nhập hoặc mật khẩu không đúng'
     }
   } catch (error) {
-    errorMessage.value = 'Có lỗi xảy ra, vui lòng thử lại'
+    errorMessage.value = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra JSON Server.'
   } finally {
     isLoading.value = false
   }

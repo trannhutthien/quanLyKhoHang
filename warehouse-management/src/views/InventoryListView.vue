@@ -52,6 +52,7 @@
           </div>
 
           <div class="warehouse-actions">
+            <button class="btn btn-danger" @click="onDeleteWarehouse(w.id)">Xóa</button>
             <RouterLink :to="`/inventory/${w.id}`" class="btn btn-primary">Xem chi tiết</RouterLink>
           </div>
         </div>
@@ -77,6 +78,12 @@ onMounted(() => {
   // Không await để UI không bị chặn; các component sẽ tự cập nhật khi state đổi
   inventory.ensureLoaded()
 })
+
+const onDeleteWarehouse = async (id: string) => {
+  if (!id) return
+  if (!confirm('Bạn có chắc chắn muốn xóa kho hàng này? Tất cả món hàng thuộc kho cũng sẽ bị xóa.')) return
+  await inventory.deleteWarehouse(id)
+}
 
 
 const showCreate = ref(false)
@@ -191,7 +198,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 .warehouse-actions {
   margin-top: auto;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .btn {
@@ -207,6 +215,12 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: #fff;
 }
+
+.btn-danger {
+  background: #ef4444;
+  color: #fff;
+}
+.btn-danger:hover { filter: brightness(0.95); }
 
 
 /* Header actions & modal styles */

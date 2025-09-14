@@ -129,6 +129,25 @@ export const useInventoryStore = defineStore('inventory', {
         return false as any
       }
     },
+
+    async deleteWarehouse(id: string) {
+      try {
+        // Xóa toàn bộ items thuộc kho trước
+        const itemsResp = await axios.get(`${API_BASE}/items`, { params: { warehouseId: id } })
+        const items: Array<{ id: string }> = Array.isArray(itemsResp.data) ? itemsResp.data : []
+        await Promise.all(items.map(it => axios.delete(`${API_BASE}/items/${encodeURIComponent(it.id)}`)))
+        // Xóa kho
+        await axios.delete(`${API_BASE}/warehouses/${encodeURIComponent(id)}`)
+        // Cập nhật state
+        this.warehouses = this.warehouses.filter(w => w.id !== id)
+        return true
+      } catch (err) {
+        console.error('Lỗi xóa kho hàng', err)
+        if (typeof window !== 'undefined') alert('Không thể xóa kho hàng. Hãy kiểm tra JSON Server đang chạy.')
+        return false
+      }
+    },
+
     _slugify(text: string) {
       return text
         .toLowerCase()
