@@ -34,17 +34,17 @@
       <!-- Modal xác thực xóa kho -->
 
       <div v-if="showDeleteAuth" class="modal-backdrop" @click.self="cancelDeleteAuth">
-        <div class="modal">
+        <div class="modal delete-auth">
           <h3>Xác nhận xóa kho hàng</h3>
           <p>Nhập tài khoản và mật khẩu để xác nhận thao tác này.</p>
           <form @submit.prevent="onSubmitAuthDelete">
             <label>Tên đăng nhập</label>
-            <input v-model="authUsername" type="text" required :disabled="authLoading" />
+            <input v-model="authUsername" type="text" required :disabled="authLoading" placeholder="Tên đăng nhập" />
             <label>Tên kho hàng</label>
-            <input v-model="authWarehouseName" type="text" required :disabled="authLoading" />
+            <input v-model="authWarehouseName" type="text" required :disabled="authLoading" placeholder="Tên kho hàng" />
 
             <label>Mật khẩu</label>
-            <input v-model="authPassword" type="password" required :disabled="authLoading" />
+            <input v-model="authPassword" type="password" required :disabled="authLoading" placeholder="Mật khẩu" />
             <div v-if="authError" class="error-message">{{ authError }}</div>
             <div class="modal-actions">
               <button type="button" class="btn" @click="cancelDeleteAuth" :disabled="authLoading">Hủy</button>
@@ -381,7 +381,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.35);
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(2px);
   display: grid;
   place-items: center;
   z-index: 1000;
@@ -401,6 +402,8 @@ const totalQuantity = (w: Warehouse) => inventory.totalQuantityInWarehouse(w)
 .modal form { display: grid; gap: 0.75rem; }
 .modal form label { font-weight: 600; color: #111; }
 .modal form input { padding: 0.6rem 0.75rem; border: 1px solid #e2e8f0; border-radius: 8px; }
+ .modal.delete-auth form input { border: 1px solid #000; }
+
   .error-message { background:#fee; color:#c53030; border:1px solid #fed7d7; padding:0.5rem; border-radius:6px; font-size:0.9rem; }
 
 .modal-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.25rem; }
