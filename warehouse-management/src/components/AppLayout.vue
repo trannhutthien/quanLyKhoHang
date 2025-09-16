@@ -38,9 +38,9 @@
           <div class="footer-section">
             <h4>Thông tin</h4>
             <p class="footer-info">
-              <span>📧 support@warehouse.com</span>
-              <span>📞 (84) 123-456-789</span>
-              <span>📍 Hà Nội, Việt Nam</span>
+              <span>📧 110122162@st.tvu.edu.vn</span>
+              <span>📞 (84) 078-288-4717</span>
+              <span>📍 Trà Vinh, Việt Nam</span>
             </p>
           </div>
         </div>
