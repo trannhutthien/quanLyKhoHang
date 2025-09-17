@@ -23,21 +23,6 @@
               <input v-model="importForm.postDate" type="date" />
             </label>
             <label>
-              <span>Kho nhập</span>
-              <select v-model="importForm.warehouseId" required>
-                <option value="" disabled>Chọn kho</option>
-                <option v-for="w in store.warehouses" :key="w.id" :value="w.id">{{ w.name }} - {{ w.location }}</option>
-              </select>
-            </label>
-            <label>
-              <span>Vị trí</span>
-              <input v-model="importForm.location" type="text" placeholder="VD: Khu A - Ô 03" />
-            </label>
-            <label>
-              <span>Kệ lưu trữ</span>
-              <input v-model="importForm.shelf" type="text" placeholder="VD: Kệ B2" />
-            </label>
-            <label>
               <span>Nhà cung cấp</span>
               <input v-model="importForm.supplierName" type="text" placeholder="Tên nhà cung cấp" />
             </label>
@@ -115,9 +100,6 @@ const importForm = reactive({
   receiptNo: '',
   docDate: '',
   postDate: '',
-  warehouseId: '',
-  location: '',
-  shelf: '',
   supplierName: '',
   taxCode: '',
   supplierAddress: '',
