@@ -14,6 +14,8 @@ export interface InventoryItem {
   category?: string
   dateAdded?: string
   expiry?: string
+  purchasePrice?: number
+  salePrice?: number
 }
 
 export interface Warehouse {
@@ -72,7 +74,18 @@ export const useInventoryStore = defineStore('inventory', {
         for (const it of itemsResp.data as any[]) {
           const wid = (it as any).warehouseId
           if (!itemsBy[wid]) itemsBy[wid] = []
-          itemsBy[wid].push({ id: it.id, name: it.name, sku: it.sku, quantity: Number(it.quantity) || 0, unit: it.unit, category: it.category, dateAdded: (it as any).dateAdded, expiry: (it as any).expiry })
+          itemsBy[wid].push({
+            id: it.id,
+            name: it.name,
+            sku: it.sku,
+            quantity: Number(it.quantity) || 0,
+            unit: it.unit,
+            category: it.category,
+            dateAdded: (it as any).dateAdded,
+            expiry: (it as any).expiry,
+            purchasePrice: typeof (it as any).purchasePrice === 'number' ? (it as any).purchasePrice : (it as any).purchasePrice ? Number((it as any).purchasePrice) : undefined,
+            salePrice: typeof (it as any).salePrice === 'number' ? (it as any).salePrice : (it as any).salePrice ? Number((it as any).salePrice) : undefined,
+          })
         }
         this.warehouses = (ws.data as any[]).map(w => ({ id: w.id, name: w.name, location: w.location, items: itemsBy[w.id] || [] }))
       } catch (err) {
@@ -97,7 +110,7 @@ export const useInventoryStore = defineStore('inventory', {
         return false as any
       }
     },
-    async addItemToWarehouse(warehouseId: string, payload: { name: string; sku: string; quantity: number; unit: string; category?: string; dateAdded?: string; expiry?: string }) {
+    async addItemToWarehouse(warehouseId: string, payload: { name: string; sku: string; quantity: number; unit: string; category?: string; dateAdded?: string; expiry?: string; purchasePrice?: number | null; salePrice?: number | null }) {
       const w = this.warehouses.find(w => w.id === warehouseId)
       if (!w) return false
       const baseSlug = payload.sku ? this._slugify(payload.sku) : this._slugify(payload.name) || 'sp'
@@ -119,9 +132,22 @@ export const useInventoryStore = defineStore('inventory', {
           unit: payload.unit,
           category: payload.category,
           dateAdded: payload.dateAdded,
-          expiry: payload.expiry
+          expiry: payload.expiry,
+          purchasePrice: payload.purchasePrice != null ? Number(payload.purchasePrice) : undefined,
+          salePrice: payload.salePrice != null ? Number(payload.salePrice) : undefined,
         })
-        w.items.push({ id, name: payload.name, sku: payload.sku, quantity: Number(payload.quantity) || 0, unit: payload.unit, category: payload.category, dateAdded: payload.dateAdded, expiry: payload.expiry })
+        w.items.push({
+          id,
+          name: payload.name,
+          sku: payload.sku,
+          quantity: Number(payload.quantity) || 0,
+          unit: payload.unit,
+          category: payload.category,
+          dateAdded: payload.dateAdded,
+          expiry: payload.expiry,
+          purchasePrice: payload.purchasePrice != null ? Number(payload.purchasePrice) : undefined,
+          salePrice: payload.salePrice != null ? Number(payload.salePrice) : undefined,
+        })
         return id
       } catch (err) {
         console.error('Lỗi thêm món hàng', err)

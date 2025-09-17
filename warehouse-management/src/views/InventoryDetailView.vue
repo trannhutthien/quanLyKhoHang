@@ -48,6 +48,17 @@
                   <input v-model="newItemUnit" type="text" required placeholder="cái, cuộn, ..." />
                 </div>
               </div>
+              <div class="grid-2">
+                <div>
+                  <label>Giá nhập</label>
+                  <input v-model.number="newItemPurchasePrice" type="number" min="0" step="1000" placeholder="0" />
+                </div>
+                <div>
+                  <label>Giá xuất</label>
+                  <input v-model.number="newItemSalePrice" type="number" min="0" step="1000" placeholder="0" />
+                </div>
+              </div>
+
               <label>Danh mục (tùy chọn)</label>
               <input v-model="newItemCategory" type="text" placeholder="Ví dụ: Bao bì" />
               <div class="grid-2">
@@ -75,6 +86,8 @@
               <th>SKU</th>
               <th class="text-right">Số lượng</th>
               <th>Đơn vị</th>
+              <th class="text-right">Giá nhập</th>
+              <th class="text-right">Giá xuất</th>
               <th>Ngày thêm</th>
               <th>Hạn sử dụng</th>
               <th>Danh mục</th>
@@ -86,6 +99,8 @@
               <td><code>{{ item.sku }}</code></td>
               <td class="text-right">{{ item.quantity }}</td>
               <td>{{ item.unit }}</td>
+              <td class="text-right">{{ fmtVND(item.purchasePrice) }}</td>
+              <td class="text-right">{{ fmtVND(item.salePrice) }}</td>
               <td>{{ item.dateAdded || '-' }}</td>
               <td>{{ item.expiry || '-' }}</td>
               <td>{{ item.category || '-' }}</td>
@@ -130,6 +145,8 @@ const filteredItems = computed(() => {
   if (!warehouse.value) return []
   const k = keyword.value.trim().toLowerCase()
   if (!k) return warehouse.value.items
+
+
   return warehouse.value.items.filter(i =>
     i.name.toLowerCase().includes(k) || i.sku.toLowerCase().includes(k)
   )
@@ -138,6 +155,15 @@ const filteredItems = computed(() => {
 // State & handler for adding item
 const showAddItem = ref(false)
 const newItemName = ref('')
+
+const newItemPurchasePrice = ref<number | null>(null)
+const newItemSalePrice = ref<number | null>(null)
+
+// Định dạng tiền tệ VND (dùng trong template)
+const fmtVND = (v?: number) => (typeof v === 'number' && !Number.isNaN(v))
+  ? new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(v)
+  : '-'
+
 const newItemSku = ref('')
 const newItemQuantity = ref<number>(0)
 const newItemUnit = ref('')
@@ -156,10 +182,13 @@ const onSubmitAddItem = async () => {
     name,
     sku,
     quantity: qty,
+
     unit,
     category: newItemCategory.value.trim() || undefined,
     dateAdded: newItemDateAdded.value || undefined,
-    expiry: newItemExpiry.value || undefined
+    expiry: newItemExpiry.value || undefined,
+    purchasePrice: newItemPurchasePrice.value ?? undefined,
+    salePrice: newItemSalePrice.value ?? undefined,
   })
   if (!id) return
   showAddItem.value = false
@@ -170,9 +199,13 @@ const onSubmitAddItem = async () => {
   newItemCategory.value = ''
   newItemDateAdded.value = new Date().toISOString().slice(0,10)
   newItemExpiry.value = ''
+  newItemPurchasePrice.value = null
+  newItemSalePrice.value = null
+
 }
 
 </script>
+
 
 <style scoped>
 .page-header {
