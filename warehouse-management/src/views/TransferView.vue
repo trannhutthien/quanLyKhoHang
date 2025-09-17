@@ -105,6 +105,94 @@
           </div>
         </form>
       </div>
+
+      <div v-else-if="selectedMode === 'export'" class="panel">
+        <h2>Phiếu xuất hàng</h2>
+        <form class="import-form" @submit.prevent="submitExport">
+          <div class="form-grid">
+            <label>
+              <span>Số phiếu</span>
+              <input v-model="exportForm.receiptNo" type="text" placeholder="VD: PX-0001" required />
+            </label>
+            <label>
+              <span>Ngày chứng từ</span>
+              <input v-model="exportForm.docDate" type="date" required />
+            </label>
+            <label class="full">
+              <span>Tham chiếu PN</span>
+              <input v-model="exportForm.referenceImport" type="text" placeholder="Số phiếu nhập tham chiếu" />
+            </label>
+            <label class="full">
+              <span>Ghi chú</span>
+              <textarea v-model="exportForm.note" rows="3" placeholder="Ghi chú thêm..."></textarea>
+            </label>
+          </div>
+
+          <div class="line-items">
+            <div class="line-items-header">
+              <h3>Danh sách mặt hàng xuất</h3>
+              <div class="pickers" style="display:flex; gap:0.5rem; flex-wrap:wrap; align-items:center;">
+                <label style="display:grid; gap:0.25rem;">
+                  <span>Kho nguồn</span>
+                  <select v-model="exportSourceWarehouseId">
+                    <option value="">— chọn kho —</option>
+                    <option v-for="w in store.warehouses" :key="w.id" :value="w.id">{{ w.name }}</option>
+                  </select>
+                </label>
+                <label style="display:grid; gap:0.25rem; min-width:260px;">
+                  <span>Chọn mặt hàng</span>
+                  <select v-model="exportSelectedItemId" :disabled="!exportSourceWarehouseId" @change="onPickExportItem">
+                    <option value="">— chọn mặt hàng —</option>
+                    <option v-for="it in exportWarehouseItems" :key="it.id" :value="it.id">{{ it.sku }} - {{ it.name }}</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+            <div class="table-wrapper">
+              <table class="items-table">
+                <thead>
+                  <tr>
+                    <th>STT</th>
+                    <th>Mã hàng</th>
+                    <th>Tên hàng</th>
+                    <th>Đơn vị tính</th>
+                    <th>Số lượng</th>
+                    <th>Giá xuất</th>
+
+
+                    <th>Kho nguồn</th>
+                        <th>Xóa</th>
+
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(row, idx) in exportItems" :key="idx">
+                    <td class="text-center">{{ idx + 1 }}</td>
+                    <td><input v-model="row.itemCode" type="text" placeholder="SKU" /></td>
+                    <td><input v-model="row.itemName" type="text" placeholder="Tên hàng" /></td>
+                    <td><input v-model="row.unit" type="text" placeholder="VD: cái, hộp" /></td>
+                    <td><input v-model.number="row.quantity" type="number" min="0" step="any" placeholder="0" /></td>
+                    <td><input v-model.number="row.unitPrice" type="number" min="0" step="any" placeholder="VND" /></td>
+                    <td>{{ warehouseNameById(exportSourceWarehouseId) }}</td>
+                    <td>
+                      <button type="button" class="btn btn-danger" @click="removeExportRow(idx)">Xóa</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <div class="total-box">Tổng tiền (giá xuất): <strong>{{ fmtVND(totalExport) }}</strong></div>
+            <div class="actions">
+              <button type="button" class="btn" @click="cancelImport">Hủy</button>
+              <button type="submit" class="btn btn-primary">Lưu tạm</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
     </section>
   </AppLayout>
 </template>
@@ -113,8 +201,10 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { useInventoryStore } from '../stores/inventory'
+import { useOrdersStore } from '../stores/orders'
 
 const store = useInventoryStore()
+const orders = useOrdersStore()
 const selectedMode = ref<'import' | 'export' | null>(null)
 
 const importForm = reactive({
@@ -155,16 +245,175 @@ function fmtVND(n: number) {
 
 const onSelect = (mode: 'import' | 'export') => {
   selectedMode.value = mode
+  if (mode === 'export') {
+    buildExportFromImport()
+  }
 }
+
+
+// Phiếu xuất (tạo dựa trên phiếu nhập)
+type ExportLineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; sourceWarehouseId: string }
+const exportForm = reactive({ receiptNo: '', docDate: '', referenceImport: '', note: '' })
+const exportItems = ref<ExportLineItem[]>([])
+
+const totalExport = computed(() => {
+  return exportItems.value.reduce((sum, r) => {
+    const qty = r.quantity != null ? Number(r.quantity) : 0
+    const price = r.unitPrice != null ? Number(r.unitPrice) : 0
+    return sum + qty * price
+  }, 0)
+})
+
+/*
+
+function buildExportFromImport() {
+
+// Chon kho + chon mot mat hang tu kho nguon de them nhanh
+const exportSourceWarehouseId = ref('')
+const exportSelectedItemId = ref('')
+
+const exportWarehouseItems = computed(() => {
+  const w = store.warehouses.find(x => x.id === exportSourceWarehouseId.value)
+  return w ? w.items : []
+})
+
+function onPickExportItem() {
+  if (!exportSelectedItemId.value) return
+  addExportByItemId(exportSelectedItemId.value)
+  exportSelectedItemId.value = ''
+}
+
+function addExportByItemId(itemId: string) {
+  const w = store.warehouses.find(x => x.id === exportSourceWarehouseId.value)
+  if (!w) return
+  const it = w.items.find(i => i.id === itemId)
+  if (!it) return
+  exportItems.value.push({
+    itemCode: it.sku,
+    itemName: it.name,
+    unit: it.unit,
+    quantity: 1,
+    unitPrice: it.salePrice ?? null,
+    sourceWarehouseId: w.id
+  })
+}
+
+  exportForm.referenceImport = importForm.receiptNo || ''
+  exportForm.docDate = new Date().toISOString().slice(0, 10)
+  // Gợi ý số phiếu PX dựa trên PN (nếu có), không bắt buộc
+  const pnNum = (importForm.receiptNo || '').replace(/[^0-9]/g, '')
+  exportForm.receiptNo = pnNum ? `PX-${pnNum}` : `PX-${String(Date.now()).slice(-6)}`
+  exportForm.note = ''
+  exportItems.value = importItems.value.map(r => ({
+    itemCode: r.itemCode,
+    itemName: r.itemName,
+    unit: r.unit,
+    quantity: 1,
+    unitPrice: r.salePrice ?? null,
+    sourceWarehouseId: r.destWarehouseId || ''
+  }))
+}
+*/
+
+function buildExportFromImport() {
+  exportForm.referenceImport = importForm.receiptNo || ''
+  exportForm.docDate = new Date().toISOString().slice(0, 10)
+  const pnNum = (importForm.receiptNo || '').replace(/[^0-9]/g, '')
+  exportForm.receiptNo = pnNum ? `PX-${pnNum}` : `PX-${String(Date.now()).slice(-6)}`
+  exportForm.note = ''
+  exportItems.value = importItems.value.map(r => ({
+    itemCode: r.itemCode,
+    itemName: r.itemName,
+    unit: r.unit,
+    quantity: 1,
+    unitPrice: r.salePrice ?? null,
+    sourceWarehouseId: r.destWarehouseId || ''
+  }))
+}
+
+// Chọn kho + chọn mặt hàng từ kho nguồn để thêm nhanh
+const exportSourceWarehouseId = ref('')
+const exportSelectedItemId = ref('')
+
+const exportWarehouseItems = computed(() => {
+  const w = store.warehouses.find(x => x.id === exportSourceWarehouseId.value)
+  return w ? w.items : []
+})
+
+function onPickExportItem() {
+  if (!exportSelectedItemId.value) return
+  addExportByItemId(exportSelectedItemId.value)
+  exportSelectedItemId.value = ''
+}
+
+function warehouseNameById(id: string) {
+  const w = store.warehouses.find(x => x.id === id)
+  return w ? w.name : ''
+}
+
+function addExportByItemId(itemId: string) {
+  const w = store.warehouses.find(x => x.id === exportSourceWarehouseId.value)
+  if (!w) return
+  const it = w.items.find(i => i.id === itemId)
+  if (!it) return
+  exportItems.value.push({
+    itemCode: it.sku,
+    itemName: it.name,
+    unit: it.unit,
+    quantity: 1,
+    unitPrice: it.salePrice ?? null,
+    sourceWarehouseId: w.id
+  })
+}
+
+
+const submitExport = () => {
+  const payload = {
+    receiptNo: exportForm.receiptNo,
+    docDate: exportForm.docDate,
+    referenceImport: exportForm.referenceImport,
+    note: exportForm.note,
+    warehouseId: exportSourceWarehouseId.value || (exportItems.value[0]?.sourceWarehouseId || ''),
+    items: exportItems.value.map(r => ({
+      itemCode: r.itemCode,
+      itemName: r.itemName,
+      unit: r.unit,
+      quantity: r.quantity,
+      unitPrice: r.unitPrice,
+      warehouseId: r.sourceWarehouseId
+    })),
+    total: totalExport.value
+  }
+  orders.addExport(payload)
+  alert('Đã lưu vào Đơn hàng. Vào mục "Đơn hàng" để xem danh sách.')
+}
+
+function removeExportRow(idx: number) {
+  exportItems.value.splice(idx, 1)
+}
+
 
 const cancelImport = () => {
   selectedMode.value = null
 }
 
 const submitImport = () => {
-  // Tạm thời chỉ log dữ liệu — sẽ kết nối API/lưu state theo yêu cầu sau
-  console.log('Import form data:', { ...importForm })
-  alert('Đã lưu tạm thông tin phiếu nhập (demo).')
+  const payload = {
+    receiptNo: importForm.receiptNo,
+    docDate: importForm.docDate,
+    note: importForm.note,
+    items: importItems.value.map(r => ({
+      itemCode: r.itemCode,
+      itemName: r.itemName,
+      unit: r.unit,
+      quantity: r.quantity ?? 1,
+      unitPrice: r.unitPrice,
+      warehouseId: r.destWarehouseId
+    })),
+    total: totalImport.value
+  }
+  orders.addImport(payload)
+  alert('Đã lưu vào Đơn hàng. Vào mục "Đơn hàng" để xem danh sách.')
 }
 </script>
 
@@ -181,6 +430,8 @@ const submitImport = () => {
 .panel {
   background: #ffffff;
   border: 1px solid #e2e8f0;
+
+
   border-radius: 12px;
   padding: 1rem;
   width: min(96vw, 1360px);
