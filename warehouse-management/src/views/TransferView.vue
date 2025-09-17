@@ -56,7 +56,7 @@
                     <th>Mã hàng</th>
                     <th>Tên hàng</th>
                     <th>Đơn vị tính</th>
-                    <th>Nhập vào kho</th>
+                    <th>Kho đích</th>
                     <th>Giá nhập</th>
                     <th>Giá xuất</th>
                     <th>Hạn sử dụng</th>
@@ -70,7 +70,12 @@
                     <td><input v-model="row.itemCode" type="text" placeholder="SKU" /></td>
                     <td><input v-model="row.itemName" type="text" placeholder="Tên hàng" required /></td>
                     <td><input v-model="row.unit" type="text" placeholder="VD: cái, hộp" required /></td>
-                    <td><input v-model.number="row.quantity" type="number" min="0" step="any" placeholder="0" required /></td>
+                    <td>
+                      <select v-model="row.destWarehouseId">
+                        <option value="">— chọn kho —</option>
+                        <option v-for="w in store.warehouses" :key="w.id" :value="w.id">{{ w.name }}</option>
+                      </select>
+                    </td>
                     <td><input v-model.number="row.unitPrice" type="number" min="0" step="any" placeholder="VND" /></td>
                     <td><input v-model.number="row.salePrice" type="number" min="0" step="any" placeholder="VND" /></td>
                     <td><input v-model="row.expiry" type="date" /></td>
@@ -81,7 +86,7 @@
                         <option value="ổn trung bình">ổn trung bình</option>
                         <option value="không đạt">không đạt</option>
                       </select>
-                    </td>>
+                    </td>
                     <td>
                       <button type="button" class="btn btn-danger" @click="removeRow(idx)">Xóa</button>
                     </td>
@@ -92,8 +97,11 @@
           </div>
 
           <div class="form-actions">
-            <button type="button" class="btn" @click="cancelImport">Hủy</button>
-            <button type="submit" class="btn btn-primary">Lưu tạm</button>
+            <div class="total-box">Tổng tiền (giá nhập): <strong>{{ fmtVND(totalImport) }}</strong></div>
+            <div class="actions">
+              <button type="button" class="btn" @click="cancelImport">Hủy</button>
+              <button type="submit" class="btn btn-primary">Lưu tạm</button>
+            </div>
           </div>
         </form>
       </div>
@@ -102,7 +110,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import AppLayout from '../components/AppLayout.vue'
 import { useInventoryStore } from '../stores/inventory'
 
@@ -123,19 +131,27 @@ const importForm = reactive({
 
 // Danh sách dòng hàng nhập
 type Quality = 'tốt' | 'ổn trung bình' | 'không đạt' | ''
-type LineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; salePrice: number | null; expiry: string; quality: Quality }
+type LineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; salePrice: number | null; expiry: string; quality: Quality; destWarehouseId: string }
 const importItems = ref<LineItem[]>([
-  { itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '', quality: '' }
+  { itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '', quality: '', destWarehouseId: '' }
 ])
 
 const addRow = () => {
-  importItems.value.push({ itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '', quality: '' })
+  importItems.value.push({ itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '', quality: '', destWarehouseId: '' })
 }
 const removeRow = (idx: number) => {
   importItems.value.splice(idx, 1)
 }
 
 onMounted(() => { store.ensureLoaded() })
+
+const totalImport = computed(() => {
+  return importItems.value.reduce((sum, r) => sum + (r.unitPrice != null ? Number(r.unitPrice) : 0), 0)
+})
+
+function fmtVND(n: number) {
+  return (n || 0).toLocaleString('vi-VN', { style: 'currency', currency: 'VND' })
+}
 
 const onSelect = (mode: 'import' | 'export') => {
   selectedMode.value = mode
@@ -200,10 +216,13 @@ const submitImport = () => {
 
 .form-actions {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
+.form-actions .actions { display: flex; gap: 0.5rem; }
+.total-box { font-weight: 700; color: #0f172a; }
 
 .btn {
   appearance: none;
