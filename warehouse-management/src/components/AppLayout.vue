@@ -1,5 +1,5 @@
 <template>
-  <div class="app-layout">
+  <div class="app-layout" :style="{'--app-bg-url': `url(${bgUrl})`}">
     <AppHeader />
     
     <main class="main-content">
@@ -57,6 +57,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from './AppHeader.vue'
+import bgUrl from '../img/store-2209526_960_720.jpg'
 
 const route = useRoute()
 
@@ -72,12 +73,40 @@ const showFooter = computed(() => {
   display: flex;
   flex-direction: column;
   background-color: var(--color-background);
+  position: relative; /* enable stacking for pseudo elements */
+}
+
+/* Blurred themed background (random warehouse/logistics image) */
+.app-layout::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: var(--app-bg-url, url('../img/store-2209526_960_720.jpg'));
+  background-size: cover;
+  background-position: center;
+  filter: blur(2px);
+  transform: scale(1.06); /* avoid edge blur cut-off */
+  opacity: 0.75; /* make background more visible */
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Subtle dark overlay for better contrast */
+.app-layout::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.12) 0%, rgba(0,0,0,0.12) 100%);
+  z-index: 0;
+  pointer-events: none;
 }
 
 .main-content {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+  z-index: 1; /* above blurred background */
 }
 
 .content-container {
@@ -86,6 +115,8 @@ const showFooter = computed(() => {
   margin: 0 auto;
   width: 100%;
   padding: 2rem;
+  position: relative;
+  z-index: 1;
 }
 
 /* Footer Styles */
@@ -93,6 +124,8 @@ const showFooter = computed(() => {
   background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
   color: white;
   margin-top: auto;
+  position: relative;
+  z-index: 1;
 }
 
 .footer-container {
@@ -171,16 +204,16 @@ const showFooter = computed(() => {
   .content-container {
     padding: 1rem;
   }
-  
+
   .footer-container {
     padding: 2rem 1rem 1rem;
   }
-  
+
   .footer-content {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
-  
+
   .footer-info {
     gap: 0.75rem;
   }
@@ -190,7 +223,7 @@ const showFooter = computed(() => {
   .content-container {
     padding: 0.5rem;
   }
-  
+
   .footer-section h4 {
     font-size: 1rem;
   }
