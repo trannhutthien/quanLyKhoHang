@@ -60,6 +60,7 @@
                     <th>Giá nhập</th>
                     <th>Giá xuất</th>
                     <th>Hạn sử dụng</th>
+                    <th>Đánh giá chất lượng</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -73,6 +74,14 @@
                     <td><input v-model.number="row.unitPrice" type="number" min="0" step="any" placeholder="VND" /></td>
                     <td><input v-model.number="row.salePrice" type="number" min="0" step="any" placeholder="VND" /></td>
                     <td><input v-model="row.expiry" type="date" /></td>
+                    <td>
+                      <select v-model="row.quality">
+                        <option value="">— chọn —</option>
+                        <option value="tốt">tốt</option>
+                        <option value="ổn trung bình">ổn trung bình</option>
+                        <option value="không đạt">không đạt</option>
+                      </select>
+                    </td>>
                     <td>
                       <button type="button" class="btn btn-danger" @click="removeRow(idx)">Xóa</button>
                     </td>
@@ -113,13 +122,14 @@ const importForm = reactive({
 
 
 // Danh sách dòng hàng nhập
-type LineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; salePrice: number | null; expiry: string }
+type Quality = 'tốt' | 'ổn trung bình' | 'không đạt' | ''
+type LineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; salePrice: number | null; expiry: string; quality: Quality }
 const importItems = ref<LineItem[]>([
-  { itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '' }
+  { itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '', quality: '' }
 ])
 
 const addRow = () => {
-  importItems.value.push({ itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '' })
+  importItems.value.push({ itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '', quality: '' })
 }
 const removeRow = (idx: number) => {
   importItems.value.splice(idx, 1)
@@ -157,7 +167,8 @@ const submitImport = () => {
   border: 1px solid #e2e8f0;
   border-radius: 12px;
   padding: 1rem;
-  max-width: 1000px;
+  width: min(96vw, 1360px);
+  max-width: 1360px;
   margin: 0 auto;
 }
 .panel h2 { margin: 0 0 0.75rem 0; color: #0f172a; }
@@ -171,14 +182,21 @@ const submitImport = () => {
 .import-form label.full { grid-column: 1 / -1; }
 .import-form input, .import-form select, .import-form textarea {
   padding: 0.6rem 0.75rem;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid #cbd5e1;
   border-radius: 8px;
   outline: none;
+  color: #0f172a;
+  font-weight: 600;
 }
 .import-form input:focus, .import-form select:focus, .import-form textarea:focus {
   border-color: #94a3b8;
   box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
 }
+.import-form input::placeholder, .import-form textarea::placeholder {
+  color: #64748b;
+  font-weight: 500;
+}
+
 
 .form-actions {
   display: flex;
@@ -200,6 +218,8 @@ const submitImport = () => {
 .btn-danger { background: #ef4444; color: #fff; }
 .btn-danger:hover { background: #dc2626; }
 
+.items-table select { width: 100%; padding: 0.45rem 0.5rem; border: 1.5px solid #cbd5e1; border-radius: 6px; color: #0f172a; font-weight: 600; background: #fff; }
+
 
 /* Line items table */
 .line-items { margin-top: 1rem; }
@@ -208,7 +228,9 @@ const submitImport = () => {
 .items-table { width: 100%; border-collapse: collapse; }
 .items-table th, .items-table td { border: 1px solid #e2e8f0; padding: 0.5rem; white-space: nowrap; }
 .items-table th { background: #f8fafc; color: #0f172a; font-weight: 600; }
-.items-table input { width: 100%; padding: 0.45rem 0.5rem; border: 1px solid #e2e8f0; border-radius: 6px; }
+.items-table input { width: 100%; padding: 0.45rem 0.5rem; border: 1.5px solid #cbd5e1; border-radius: 6px; color: #0f172a; font-weight: 600; }
+.items-table input::placeholder { color: #64748b; font-weight: 500; }
+
 
 @media (max-width: 768px) {
   .import-form .form-grid { grid-template-columns: 1fr; }
