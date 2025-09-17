@@ -52,22 +52,26 @@
               <table class="items-table">
                 <thead>
                   <tr>
+                    <th>STT</th>
                     <th>Mã hàng</th>
                     <th>Tên hàng</th>
                     <th>Đơn vị tính</th>
                     <th>Nhập vào kho</th>
                     <th>Giá nhập</th>
+                    <th>Giá xuất</th>
                     <th>Hạn sử dụng</th>
                     <th></th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="(row, idx) in importItems" :key="idx">
+                    <td class="text-center">{{ idx + 1 }}</td>
                     <td><input v-model="row.itemCode" type="text" placeholder="SKU" /></td>
                     <td><input v-model="row.itemName" type="text" placeholder="Tên hàng" required /></td>
                     <td><input v-model="row.unit" type="text" placeholder="VD: cái, hộp" required /></td>
                     <td><input v-model.number="row.quantity" type="number" min="0" step="any" placeholder="0" required /></td>
                     <td><input v-model.number="row.unitPrice" type="number" min="0" step="any" placeholder="VND" /></td>
+                    <td><input v-model.number="row.salePrice" type="number" min="0" step="any" placeholder="VND" /></td>
                     <td><input v-model="row.expiry" type="date" /></td>
                     <td>
                       <button type="button" class="btn btn-danger" @click="removeRow(idx)">Xóa</button>
@@ -109,13 +113,13 @@ const importForm = reactive({
 
 
 // Danh sách dòng hàng nhập
-type LineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; expiry: string }
+type LineItem = { itemCode: string; itemName: string; unit: string; quantity: number | null; unitPrice: number | null; salePrice: number | null; expiry: string }
 const importItems = ref<LineItem[]>([
-  { itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, expiry: '' }
+  { itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '' }
 ])
 
 const addRow = () => {
-  importItems.value.push({ itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, expiry: '' })
+  importItems.value.push({ itemCode: '', itemName: '', unit: '', quantity: null, unitPrice: null, salePrice: null, expiry: '' })
 }
 const removeRow = (idx: number) => {
   importItems.value.splice(idx, 1)
