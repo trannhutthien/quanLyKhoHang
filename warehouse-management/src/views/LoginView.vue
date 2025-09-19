@@ -56,9 +56,9 @@ import axios from 'axios'
 
 const router = useRouter()
 
-const API_BASE = (typeof window !== 'undefined' && window.location?.hostname)
-  ? `http://${window.location.hostname}:3001`
-  : 'http://localhost:3001'
+const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL)
+  ? (import.meta as any).env.VITE_API_BASE_URL
+  : '/api'
 
 // Form data
 const loginForm = reactive({

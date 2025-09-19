@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
-const API_BASE = (typeof window !== 'undefined' && window.location && window.location.hostname)
-  ? `http://${window.location.hostname}:3001`
-  : 'http://localhost:3001'
+const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL)
+  ? (import.meta as any).env.VITE_API_BASE_URL
+  : '/api'
 
 
 export interface InventoryItem {
