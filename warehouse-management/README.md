@@ -63,3 +63,14 @@ npm run test:e2e -- --debug
 ```sh
 npm run lint
 ```
+## Docker
+## cách chạy full tack
+```sh
+docker-compose up --build
+```
+
+## cách chạy fontend 
+```sh
+docker build -t warehouse-frontend:1.0 .
+docker run -d -p 8080:80 --name warehouse-container warehouse-frontend:1.0
+```

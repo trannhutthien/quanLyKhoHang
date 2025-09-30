@@ -56,10 +56,10 @@ import axios from 'axios'
 
 const router = useRouter()
 
-const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL)
-  ? (import.meta as any).env.VITE_API_BASE_URL
-  : '/api'
-
+interface ViteEnv {
+  VITE_API_BASE_URL?: string
+}
+const API_BASE: string = ((import.meta as unknown as { env: ViteEnv }).env?.VITE_API_BASE_URL) ?? '/api'
 // Form data
 const loginForm = reactive({
   username: '',
@@ -101,7 +101,7 @@ const handleLogin = async () => {
     } else {
       errorMessage.value = 'Tên đăng nhập hoặc mật khẩu không đúng'
     }
-  } catch (error) {
+  } catch {
     errorMessage.value = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra JSON Server.'
   } finally {
     isLoading.value = false

@@ -1,8 +1,10 @@
-# Multi-stage build for Vue 3 (Vite)
-
 # 1) Build stage
-FROM node:18-alpine AS build
+FROM node:20-alpine AS build
 WORKDIR /app
+
+# 👇 nhận biến từ docker-compose build args
+ARG VITE_API_BASE_URL
+ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
 
 # Install dependencies first (leverage Docker cache)
 COPY package*.json ./
@@ -18,10 +20,8 @@ FROM nginx:1.27-alpine AS runtime
 # Copy nginx config for SPA fallback
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
-# Copy built assets//
+# Copy built assets
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-
-
