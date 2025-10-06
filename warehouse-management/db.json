@@ -1,0 +1,65 @@
+{
+  "warehouses": [
+    {
+      "id": "kho-a",
+      "name": "Kho A",
+      "location": "Hà Nội"
+    },
+    {
+      "id": "kho-d",
+      "name": "kho d",
+      "location": "bến tre"
+    },
+    {
+      "id": "kho-i",
+      "name": "kho i",
+      "location": "duyên hải trà vinh"
+    }
+  ],
+  "items": [
+    {
+      "id": "sp-001",
+      "warehouseId": "kho-a",
+      "name": "Thùng carton 60x40x40",
+      "sku": "BOX-604040",
+      "quantity": 120,
+      "unit": "cái",
+      "category": "Bao bì"
+    },
+    {
+      "id": "sp-002",
+      "warehouseId": "kho-a",
+      "name": "Băng keo 48mm",
+      "sku": "TAPE-48",
+      "quantity": 340,
+      "unit": "cuộn",
+      "category": "Bao bì"
+    },
+    {
+      "id": "sp-003",
+      "warehouseId": "kho-a",
+      "name": "Nón bảo hộ",
+      "sku": "SAF-HELM",
+      "quantity": 58,
+      "unit": "cái",
+      "category": "An toàn"
+    },
+    {
+      "id": "sp-md01",
+      "warehouseId": "kho-a",
+      "name": "muc dau",
+      "sku": "md01",
+      "quantity": 5,
+      "unit": "chay"
+    }
+  ],
+  "users": [
+    {
+      "id": "u-1",
+      "username": "admin",
+      "password": "123456",
+      "name": "Quản trị viên",
+      "role": "admin"
+    }
+  ]
+}
