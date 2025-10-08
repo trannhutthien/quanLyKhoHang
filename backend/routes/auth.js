@@ -24,8 +24,16 @@ router.post('/login', async (req, res, next) => {
 
         const user = result.recordset[0];
         
-        // So sánh password (nếu đã hash)
-        const isValid = await bcrypt.compare(password, user.MatKhau);
+        // ⚠️ DEMO MODE: So sánh plaintext password (KHÔNG BAO GIỜ DÙNG TRONG PRODUCTION!)
+        console.log('🔍 Login attempt:');
+        console.log('  Username:', username);
+        console.log('  Password (input):', password);
+        console.log('  Password (DB):', user.MatKhau);
+        
+        // So sánh plaintext
+        const isValid = (password === user.MatKhau);
+        console.log('  Compare result:', isValid);
+        
         if (!isValid) {
             return res.status(401).json({ error: 'Invalid credentials' });
         }
