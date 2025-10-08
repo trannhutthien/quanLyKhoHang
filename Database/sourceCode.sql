@@ -113,41 +113,4 @@ CREATE TABLE dbo.HANG_HOA (
 );
 GO
 
--- (Tùy chọn) Trigger update nhanh ngày thêm/cập nhật — nếu bạn muốn
--- (Giữ gọn: không tạo trigger cho HANG_HOA để tránh nặng hệ thống)
 
-/* ===========================
-   6) DỮ LIỆU MẪU (KHỚP JSON)
-=========================== */
--- Người dùng
-INSERT INTO dbo.NGUOI_DUNG (MaNguoiDung, TenDangNhap, MatKhau, HoTen, VaiTro) VALUES
-(N'u-1', N'admin', N'123456', N'Quản trị viên', N'admin');
-
--- Kho (gán quản lý thử cho kho-a)
-INSERT INTO dbo.KHO (MaKho, TenKho, DiaChi, SucChuaToiDa, TrangThai, NguoiQuanLyId)
-VALUES
-(N'kho-a', N'Kho A', N'Hà Nội',             NULL,         N'Hoạt động', N'u-1'),
-(N'kho-d', N'kho d', N'bến tre',            NULL,         N'Hoạt động', NULL),
-(N'kho-i', N'kho i', N'duyên hải trà vinh', NULL,         N'Hoạt động', NULL);
-
--- Hàng hóa
-INSERT INTO dbo.HANG_HOA (MaHang, MaKho, TenHang, MaSKU, SoLuong, DonVi, DanhMuc, NgayThem, HanSuDung, GiaNhap, GiaBan) VALUES
-(N'sp-001',    N'kho-a', N'Thùng carton 60x40x40', N'BOX-604040', 120, N'cái',  N'Bao bì',            NULL,                         NULL,                    NULL,   NULL),
-(N'sp-002',    N'kho-a', N'Băng keo 48mm',          N'TAPE-48',    340, N'cuộn', N'Bao bì',            NULL,                         NULL,                    NULL,   NULL),
-(N'sp-003',    N'kho-a', N'Nón bảo hộ',             N'SAF-HELM',    58, N'cái',  N'An toàn',           NULL,                         NULL,                    NULL,   NULL),
-(N'sp-md01',   N'kho-a', N'muc dau',                N'md01',         5, N'chay', NULL,                 NULL,                         NULL,                    NULL,   NULL),
-(N'sp-md-120', N'kho-a', N'Mức đào',                N'md-120',      20, N'hộp',  N'nguyên liệu phụ',   CONVERT(date,'2025-10-02'),  CONVERT(date,'2026-10-02'), 50000, 70000);
-GO
-
-/* ===========================
-   7) GỢI Ý TRUY VẤN KIỂM TRA
-=========================== */
--- Xem danh sách kho + người quản lý
-SELECT K.MaKho, K.TenKho, K.TrangThai, ND.HoTen AS NguoiQuanLy
-FROM dbo.KHO K
-LEFT JOIN dbo.NGUOI_DUNG ND ON ND.MaNguoiDung = K.NguoiQuanLyId;
-
--- Xem tồn kho theo kho
-SELECT MaKho, COUNT(*) AS SoMatHang, SUM(SoLuong) AS TongSoLuong
-FROM dbo.HANG_HOA
-GROUP BY MaKho;

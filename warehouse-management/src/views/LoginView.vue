@@ -84,25 +84,23 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    const resp = await axios.get(`${API_BASE}/users`, {
-      params: { username: loginForm.username, password: loginForm.password }
+    // Gọi API POST /auth/login thay vì GET /users
+    const resp = await axios.post(`${API_BASE}/auth/login`, {
+      username: loginForm.username,
+      password: loginForm.password
     })
-    const users = Array.isArray(resp.data) ? resp.data : []
-    if (users.length > 0) {
-      const u = users[0]
-      localStorage.setItem('user', JSON.stringify({
-        id: u.id,
-        username: u.username,
-        name: u.name,
-        role: u.role,
-        isAuthenticated: true
-      }))
-      router.push('/')
-    } else {
+    
+    // Backend trả về: { id, username, name, role, isAuthenticated }
+    const user = resp.data
+    
+    localStorage.setItem('user', JSON.stringify(user))
+    router.push('/')
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 401) {
       errorMessage.value = 'Tên đăng nhập hoặc mật khẩu không đúng'
+    } else {
+      errorMessage.value = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra backend.'
     }
-  } catch {
-    errorMessage.value = 'Không thể kết nối tới máy chủ. Vui lòng kiểm tra JSON Server.'
   } finally {
     isLoading.value = false
   }
