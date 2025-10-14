@@ -199,7 +199,7 @@ const onSubmitAuthDelete = async () => {
     return
   } catch (e) {
     console.error(e)
-    authError.value = 'Không thể kết nối tới máy chủ. Hãy chạy JSON Server.'
+    authError.value = 'Không thể kết nối tới máy chủ. Hãy chạy backend.'
   } finally {
     authLoading.value = false
   }

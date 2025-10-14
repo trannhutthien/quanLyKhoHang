@@ -106,7 +106,7 @@ export const useInventoryStore = defineStore('inventory', {
         return id
       } catch (err) {
         console.error('Lỗi tạo kho hàng', err)
-        if (typeof window !== 'undefined') alert('Không thể lưu kho hàng vào API. Hãy kiểm tra JSON Server đang chạy.')
+        if (typeof window !== 'undefined') alert('Không thể lưu kho hàng vào API. Hãy kiểm tra backend đang chạy.')
         return false as any
       }
     },
@@ -151,7 +151,7 @@ export const useInventoryStore = defineStore('inventory', {
         return id
       } catch (err) {
         console.error('Lỗi thêm món hàng', err)
-        if (typeof window !== 'undefined') alert('Không thể lưu món hàng vào API. Hãy kiểm tra JSON Server đang chạy.')
+        if (typeof window !== 'undefined') alert('Không thể lưu món hàng vào API. Hãy kiểm tra backend đang chạy.')
         return false as any
       }
     },
@@ -169,7 +169,7 @@ export const useInventoryStore = defineStore('inventory', {
         return true
       } catch (err) {
         console.error('Lỗi xóa kho hàng', err)
-        if (typeof window !== 'undefined') alert('Không thể xóa kho hàng. Hãy kiểm tra JSON Server đang chạy.')
+        if (typeof window !== 'undefined') alert('Không thể xóa kho hàng. Hãy kiểm tra backend đang chạy.')
         return false
       }
     },

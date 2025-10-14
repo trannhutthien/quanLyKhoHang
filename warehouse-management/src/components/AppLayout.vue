@@ -125,7 +125,7 @@ const showFooter = computed(() => {
   color: white;
   margin-top: auto;
   position: relative;
-  z-index: 1;
+  z-index: 0; /* Thấp nhất - để tất cả content nổi lên trên */
 }
 
 .footer-container {

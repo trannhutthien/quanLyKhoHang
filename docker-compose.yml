@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: quanly-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong@Passw0rd"
+      MSSQL_PID: "Express"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P 'YourStrong@Passw0rd' -Q "SELECT 1"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend Node.js/Express
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: quanly-backend
+    environment:
+      DB_SERVER: sqlserver
+      DB_PORT: 1433
+      DB_DATABASE: QuanLyKho_JSON
+      DB_USER: sa
+      DB_PASSWORD: "YourStrong@Passw0rd"
+      DB_ENCRYPT: "true"
+      DB_TRUST_CERTIFICATE: "true"
+      NODE_ENV: production
+    ports:
+      - "3001:3001"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/warehouses", "||", "exit", "1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  # Frontend Vue.js + Nginx
+  frontend:
+    build:
+      context: ./warehouse-management
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: "/api"
+    container_name: quanly-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+    driver: local
