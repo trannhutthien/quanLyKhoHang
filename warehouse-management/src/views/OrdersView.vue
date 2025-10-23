@@ -48,7 +48,10 @@ import { useInventoryStore } from '../stores/inventory'
 const orders = useOrdersStore()
 const inventory = useInventoryStore()
 
-onMounted(() => { inventory.ensureLoaded() })
+onMounted(async () => { 
+  inventory.ensureLoaded()
+  await orders.loadReceipts()  // Load phiếu từ database
+})
 
 const rows = computed(() => orders.allReceipts)
 

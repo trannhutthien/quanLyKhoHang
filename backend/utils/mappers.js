@@ -15,14 +15,13 @@ function mapWarehouse(row) {
 function mapItem(row) {
     return {
         id: row.MaHang,
-        warehouseId: row.MaKho,
+        warehouseId: row.MaKho || null,  // Từ TON_KHO (nếu có)
         name: row.TenHang,
         sku: row.MaSKU,
-        quantity: row.SoLuong,
+        quantity: row.SoLuongTon || 0,   // Từ TON_KHO
         unit: row.DonVi,
         category: row.DanhMuc,
         dateAdded: row.NgayThem ? row.NgayThem.toISOString().split('T')[0] : null,
-        expiry: row.HanSuDung ? row.HanSuDung.toISOString().split('T')[0] : null,
         purchasePrice: row.GiaNhap,
         salePrice: row.GiaBan
     };

@@ -19,6 +19,7 @@ app.get('/healthz', (req, res) => {
 app.use('/warehouses', require('./routes/warehouses'));
 app.use('/items', require('./routes/items'));
 app.use('/auth', require('./routes/auth'));
+app.use('/receipts', require('./routes/receipts'));
 
 // Error handler
 app.use((err, req, res, next) => {

@@ -1,116 +1,174 @@
-﻿/* ===========================
-   1) TẠO DATABASE & SỬ DỤNG
+﻿
 =========================== */
 IF DB_ID(N'QuanLyKho_JSON') IS NULL
-    CREATE DATABASE QuanLyKho_JSON;
+    CREATE DATABASE QuanLyKho_JSON;
 GO
 USE QuanLyKho_JSON;
 GO
 
-/* ===========================
-   2) DỌN BẢNG CŨ (NẾU CÓ)
-=========================== */
-IF OBJECT_ID(N'dbo.HANG_HOA', N'U') IS NOT NULL DROP TABLE dbo.HANG_HOA;
-IF OBJECT_ID(N'dbo.KHO', N'U') IS NOT NULL DROP TABLE dbo.KHO;
-IF OBJECT_ID(N'dbo.NGUOI_DUNG', N'U') IS NOT NULL DROP TABLE dbo.NGUOI_DUNG;
-GO
-
-/* ===========================
-   3) BẢNG NGƯỜI DÙNG
-=========================== */
 CREATE TABLE dbo.NGUOI_DUNG (
-    MaNguoiDung  NVARCHAR(50)   NOT NULL PRIMARY KEY,   -- ví dụ: 'u-1'
-    TenDangNhap  NVARCHAR(100)  NOT NULL,               -- ví dụ: 'admin' (UNIQUE)
-    MatKhau      NVARCHAR(255)  NOT NULL,               -- thực tế nên lưu hash
-    HoTen        NVARCHAR(200)  NOT NULL,               -- ví dụ: 'Quản trị viên'
-    VaiTro       NVARCHAR(50)   NOT NULL,               -- 'admin', 'user', ...
-    CONSTRAINT UQ_NGUOIDUNG_TenDangNhap UNIQUE (TenDangNhap)
+    MaNguoiDung  NVARCHAR(50)   NOT NULL PRIMARY KEY,
+    TenDangNhap  NVARCHAR(100)  NOT NULL,
+    MatKhau      NVARCHAR(255)  NOT NULL,
+    HoTen        NVARCHAR(200)  NOT NULL,
+    VaiTro       NVARCHAR(50)   NOT NULL, -- 'admin', 'user', 'kho' ...
+    CONSTRAINT UQ_NGUOIDUNG_TenDangNhap UNIQUE (TenDangNhap)
 );
 GO
 
-/* ===========================
-   4) BẢNG KHO
-   - Có Người quản lý (FK tới NGUOI_DUNG)
-   - Có Sức chứa, Trạng thái, Soft delete, Audit time
-=========================== */
+
 CREATE TABLE dbo.KHO (
-    MaKho          NVARCHAR(50)   NOT NULL PRIMARY KEY,                   -- 'kho-a'
-    TenKho         NVARCHAR(200)  NOT NULL,                               -- 'Kho A'
-    DiaChi         NVARCHAR(300)  NOT NULL,                               -- 'Hà Nội'
-    SucChuaToiDa   DECIMAL(18,2)  NULL,                                   -- sức chứa (đơn vị tùy bạn)
-    TrangThai      NVARCHAR(20)   NOT NULL CONSTRAINT DF_KHO_TrangThai DEFAULT (N'Hoạt động'),
-    NguoiQuanLyId  NVARCHAR(50)   NULL,                                   -- FK -> NGUOI_DUNG.MaNguoiDung
+    MaKho          NVARCHAR(50)   NOT NULL PRIMARY KEY,
+    TenKho         NVARCHAR(200)  NOT NULL,
+    DiaChi         NVARCHAR(300)  NOT NULL,
+    NguoiQuanLyId  NVARCHAR(50)   NULL,
+    TrangThai      NVARCHAR(20)   NOT NULL CONSTRAINT DF_KHO_TrangThai DEFAULT (N'Hoạt động'),
+    DaXoa          BIT            NOT NULL CONSTRAINT DF_KHO_DaXoa DEFAULT (0),
+    TaoLuc         DATETIME2(0)   NOT NULL CONSTRAINT DF_KHO_TaoLuc DEFAULT (SYSDATETIME()),
+    CapNhatLuc     DATETIME2(0)   NOT NULL CONSTRAINT DF_KHO_CapNhatLuc DEFAULT (SYSDATETIME()),
 
-    DaXoa          BIT            NOT NULL CONSTRAINT DF_KHO_DaXoa DEFAULT (0),
-    TaoLuc         DATETIME2(0)   NOT NULL CONSTRAINT DF_KHO_TaoLuc DEFAULT (SYSDATETIME()),
-    CapNhatLuc     DATETIME2(0)   NOT NULL CONSTRAINT DF_KHO_CapNhatLuc DEFAULT (SYSDATETIME()),
-
-    CONSTRAINT CK_KHO_SucChua_KhongAm CHECK (SucChuaToiDa IS NULL OR SucChuaToiDa >= 0),
-    CONSTRAINT CK_KHO_TrangThai CHECK (TrangThai IN (N'Hoạt động', N'Tạm dừng', N'Đóng'))
+    CONSTRAINT CK_KHO_TrangThai CHECK (TrangThai IN (N'Hoạt động', N'Tạm dừng', N'Đóng')),
+    CONSTRAINT FK_KHO_NGUOIDUNG
+        FOREIGN KEY (NguoiQuanLyId) REFERENCES dbo.NGUOI_DUNG(MaNguoiDung)
+        ON UPDATE NO ACTION ON DELETE SET NULL
 );
 GO
 
--- Khóa ngoại Người quản lý
-ALTER TABLE dbo.KHO
-ADD CONSTRAINT FK_KHO_NGUOIDUNG
-    FOREIGN KEY (NguoiQuanLyId)
-    REFERENCES dbo.NGUOI_DUNG(MaNguoiDung)
-    ON UPDATE NO ACTION
-    ON DELETE SET NULL;   -- xóa user → gỡ liên kết, kho vẫn tồn tại
-GO
 
--- Trigger tự động cập nhật CapNhatLuc khi UPDATE
-CREATE OR ALTER TRIGGER dbo.tr_KHO_SetCapNhatLuc
-ON dbo.KHO
-AFTER UPDATE
-AS
-BEGIN
-    SET NOCOUNT ON;
-    UPDATE K
-      SET CapNhatLuc = SYSDATETIME()
-    FROM dbo.KHO K
-    INNER JOIN inserted i ON K.MaKho = i.MaKho;
-END
-GO
-
--- Chỉ mục: Tên kho duy nhất cho các bản ghi chưa xóa (soft-delete friendly)
-CREATE UNIQUE INDEX UX_KHO_TenKho_Active
-ON dbo.KHO (TenKho)
-WHERE DaXoa = 0;
-
--- Chỉ mục phổ biến
-CREATE INDEX IX_KHO_TrangThai ON dbo.KHO (TrangThai) WHERE DaXoa = 0;
-CREATE INDEX IX_KHO_DaXoa     ON dbo.KHO (DaXoa);
-GO
-
-/* ===========================
-   5) BẢNG HÀNG HÓA
-   - Bám JSON: SKU, số lượng, đơn vị, danh mục
-   - Ngày thêm, hạn sử dụng, giá nhập/bán
-=========================== */
 CREATE TABLE dbo.HANG_HOA (
-    MaHang     NVARCHAR(50)   NOT NULL PRIMARY KEY,      -- 'sp-001'
-    MaKho      NVARCHAR(50)   NOT NULL,                  -- FK → KHO.MaKho
-    TenHang    NVARCHAR(200)  NOT NULL,
-    MaSKU      NVARCHAR(100)  NOT NULL,                  -- UNIQUE
-    SoLuong    INT            NOT NULL CONSTRAINT DF_HH_SoLuong DEFAULT(0),
-    DonVi      NVARCHAR(50)   NOT NULL,                  -- 'cái', 'cuộn', 'hộp', ...
-    DanhMuc    NVARCHAR(100)  NULL,                      -- 'Bao bì', 'An toàn', ...
-    NgayThem   DATE           NULL CONSTRAINT DF_HH_NgayThem DEFAULT (CONVERT(date, GETDATE())),
-    HanSuDung  DATE           NULL,
-    GiaNhap    DECIMAL(18,2)  NULL,
-    GiaBan     DECIMAL(18,2)  NULL,
+    MaHang     NVARCHAR(50)   NOT NULL PRIMARY KEY,      -- 'sp-001'
+    TenHang    NVARCHAR(200)  NOT NULL,
+    MaSKU      NVARCHAR(100)  NOT NULL,
+    DonVi      NVARCHAR(50)   NOT NULL,                  -- 'cái', 'cuộn', 'hộp'
+    DanhMuc    NVARCHAR(100)  NULL,
+    NgayThem   DATE           NULL CONSTRAINT DF_HH_NgayThem DEFAULT (CONVERT(date, GETDATE())),
+    GiaNhap    DECIMAL(18,2)  NULL,    -- Giá nhập tham khảo/lần cuối
+    GiaBan     DECIMAL(18,2)  NULL,    -- Giá bán đề nghị
 
-    CONSTRAINT FK_HANGHOA_KHO
-        FOREIGN KEY (MaKho) REFERENCES dbo.KHO(MaKho)
-        ON UPDATE CASCADE ON DELETE NO ACTION,
-
-    CONSTRAINT UQ_HANGHOA_MaSKU UNIQUE (MaSKU),
-    CONSTRAINT CK_HANGHOA_SoLuong_NonNegative CHECK (SoLuong >= 0),
-    CONSTRAINT CK_HANGHOA_GiaNhap_NonNegative CHECK (GiaNhap IS NULL OR GiaNhap >= 0),
-    CONSTRAINT CK_HANGHOA_GiaBan_NonNegative  CHECK (GiaBan  IS NULL OR GiaBan  >= 0),
-    CONSTRAINT CK_HANGHOA_Ngay_Logic CHECK (HanSuDung IS NULL OR NgayThem IS NULL OR HanSuDung >= NgayThem)
+    CONSTRAINT UQ_HANGHOA_MaSKU UNIQUE (MaSKU),
+    CONSTRAINT CK_HANGHOA_GiaNhap_NonNegative CHECK (GiaNhap IS NULL OR GiaNhap >= 0),
+    CONSTRAINT CK_HANGHOA_GiaBan_NonNegative  CHECK (GiaBan  IS NULL OR GiaBan  >= 0)
 );
 GO
 
 
+CREATE TABLE dbo.TON_KHO (
+    MaHang     NVARCHAR(50)   NOT NULL, -- FK -> HANG_HOA
+    MaKho      NVARCHAR(50)   NOT NULL, -- FK -> KHO
+    SoLuongTon INT           NOT NULL CONSTRAINT DF_TONKHO_SoLuong DEFAULT (0),
+
+    -- Khóa chính là cặp (Mã hàng, Mã kho)
+    CONSTRAINT PK_TON_KHO PRIMARY KEY (MaHang, MaKho),
+    
+    CONSTRAINT FK_TONKHO_HANGHOA
+        FOREIGN KEY (MaHang) REFERENCES dbo.HANG_HOA(MaHang)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+        
+    CONSTRAINT FK_TONKHO_KHO
+        FOREIGN KEY (MaKho) REFERENCES dbo.KHO(MaKho)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+        
+    CONSTRAINT CK_TONKHO_SoLuong_NonNegative CHECK (SoLuongTon >= 0)
+);
+GO
+
+
+CREATE TABLE dbo.NHA_CUNG_CAP (
+    MaNhaCungCap   NVARCHAR(50)   NOT NULL PRIMARY KEY,
+    TenNhaCungCap  NVARCHAR(200)  NOT NULL,
+    MaSoThue       NVARCHAR(20)   NULL,
+    DiaChi         NVARCHAR(300)  NULL,
+    SoDienThoai    NVARCHAR(20)   NULL,
+    Email          NVARCHAR(100)  NULL,
+    GhiChu         NVARCHAR(500)  NULL
+);
+GO
+
+
+CREATE TABLE dbo.PHIEU_NHAP_KHO (
+    MaPhieuNhap    NVARCHAR(50)   NOT NULL PRIMARY KEY,
+    NgayChungTu    DATE           NOT NULL,
+    NgayHachToan   DATE           NULL,
+    MaNhaCungCap   NVARCHAR(50)   NULL,
+    SoThamChieu    NVARCHAR(100)  NULL,
+    GhiChu         NVARCHAR(1000) NULL,
+    TongTien       DECIMAL(18,2)  NULL CONSTRAINT DF_PN_TongTien DEFAULT(0),
+    NguoiTaoId     NVARCHAR(50)   NULL,
+    
+    CONSTRAINT FK_PHIEUNHAP_NHACUNGCAP
+        FOREIGN KEY (MaNhaCungCap) REFERENCES dbo.NHA_CUNG_CAP(MaNhaCungCap)
+        ON UPDATE CASCADE ON DELETE SET NULL,
+        
+    CONSTRAINT FK_PHIEUNHAP_NGUOIDUNG
+        FOREIGN KEY (NguoiTaoId) REFERENCES dbo.NGUOI_DUNG(MaNguoiDung)
+        ON UPDATE NO ACTION ON DELETE SET NULL
+);
+GO
+
+
+CREATE TABLE dbo.CHI_TIET_NHAP_KHO (
+    MaChiTietNhap   BIGINT         NOT NULL PRIMARY KEY IDENTITY(1,1),
+    MaPhieuNhap     NVARCHAR(50)   NOT NULL, -- FK -> PHIEU_NHAP_KHO
+    MaHang          NVARCHAR(50)   NOT NULL, -- FK -> HANG_HOA
+    MaKho           NVARCHAR(50)   NOT NULL, -- FK -> KHO (Kho đích)
+    SoLuong         INT           NOT NULL,
+    DonGiaNhap       DECIMAL(18,2)  NULL,
+    DonGiaXuatDeNghi DECIMAL(18,2)  NULL,
+    HanSuDung       DATE           NULL,
+    DanhGiaChatLuong NVARCHAR(100)  NULL,
+    
+    CONSTRAINT FK_CTN_PHIEUNHAP
+        FOREIGN KEY (MaPhieuNhap) REFERENCES dbo.PHIEU_NHAP_KHO(MaPhieuNhap)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    
+    CONSTRAINT FK_CTN_HANGHOA
+        FOREIGN KEY (MaHang) REFERENCES dbo.HANG_HOA(MaHang)
+        ON UPDATE CASCADE ON DELETE NO ACTION,
+        
+    CONSTRAINT FK_CTN_KHO
+        FOREIGN KEY (MaKho) REFERENCES dbo.KHO(MaKho)
+        ON UPDATE NO ACTION ON DELETE NO ACTION,
+    
+    CONSTRAINT CK_CTN_SoLuong_Positive CHECK (SoLuong > 0)
+);
+GO
+
+
+CREATE TABLE dbo.PHIEU_XUAT_KHO (
+    MaPhieuXuat NVARCHAR(50)   NOT NULL PRIMARY KEY,
+    NgayChungTu          DATE           NOT NULL,
+    MaPhieuNhapThamChieu NVARCHAR(50)   NULL,
+    GhiChu               NVARCHAR(1000) NULL,
+    TongTien             DECIMAL(18,2)  NULL CONSTRAINT DF_PX_TongTien DEFAULT(0),
+    NguoiTaoId          NVARCHAR(50)   NULL,
+    
+    CONSTRAINT FK_PHIEUXUAT_NGUOIDUNG
+        FOREIGN KEY (NguoiTaoId) REFERENCES dbo.NGUOI_DUNG(MaNguoiDung)
+        ON UPDATE NO ACTION ON DELETE SET NULL
+);
+GO
+
+
+CREATE TABLE dbo.CHI_TIET_XUAT_KHO (
+    MaChiTietXuat  BIGINT         NOT NULL PRIMARY KEY IDENTITY(1,1),
+    MaPhieuXuat    NVARCHAR(50)   NOT NULL, -- FK -> PHIEU_XUAT_KHO
+    MaHang         NVARCHAR(50)   NOT NULL, -- FK -> HANG_HOA
+    MaKho           NVARCHAR(50)   NOT NULL, -- FK -> KHO (Kho nguồn)
+    SoLuong         INT           NOT NULL,
+    DonGiaXuat      DECIMAL(18,2)  NULL,
+    
+    CONSTRAINT FK_CTX_PHIEUXUAT
+        FOREIGN KEY (MaPhieuXuat) REFERENCES dbo.PHIEU_XUAT_KHO(MaPhieuXuat)
+        ON UPDATE CASCADE ON DELETE CASCADE,
+    
+    CONSTRAINT FK_CTX_HANGHOA
+        FOREIGN KEY (MaHang) REFERENCES dbo.HANG_HOA(MaHang)
+        ON UPDATE CASCADE ON DELETE NO ACTION,
+    
+    CONSTRAINT FK_CTX_KHO
+        FOREIGN KEY (MaKho) REFERENCES dbo.KHO(MaKho)
+        ON UPDATE NO ACTION ON DELETE NO ACTION,
+    
+    CONSTRAINT CK_CTX_SoLuong_Positive CHECK (SoLuong > 0)
+);
+GO

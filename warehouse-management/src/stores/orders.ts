@@ -1,4 +1,9 @@
 import { defineStore } from 'pinia'
+import axios from 'axios'
+
+const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL)
+  ? (import.meta as any).env.VITE_API_BASE_URL
+  : 'http://localhost:3001'
 
 export type ReceiptType = 'import' | 'export'
 
@@ -41,39 +46,63 @@ export const useOrdersStore = defineStore('orders', {
       })
   },
   actions: {
-    addImport(payload: Omit<Receipt, 'id' | 'type' | 'itemsCount' | 'total'> & { items: ReceiptLine[]; total?: number }) {
-      const total = payload.total != null ? payload.total : payload.items.reduce((s, r) => s + (r.unitPrice != null ? Number(r.unitPrice) : 0), 0)
-      const rec: Receipt = {
-        id: genId('PN'),
-        type: 'import',
-        receiptNo: payload.receiptNo,
-        docDate: payload.docDate,
-        referenceImport: payload.referenceImport,
-        note: payload.note,
-        warehouseId: payload.warehouseId,
-        items: payload.items,
-        itemsCount: payload.items.length,
-        total
+    async loadReceipts() {
+      try {
+        const response = await axios.get(`${API_BASE}/receipts`)
+        this.receipts = response.data
+      } catch (err) {
+        console.error('Failed to load receipts:', err)
       }
-      this.receipts.push(rec)
-      return rec.id
     },
-    addExport(payload: Omit<Receipt, 'id' | 'type' | 'itemsCount' | 'total'> & { items: ReceiptLine[]; total?: number }) {
-      const total = payload.total != null ? payload.total : payload.items.reduce((s, r) => s + (r.quantity ? Number(r.quantity) : 0) * (r.unitPrice != null ? Number(r.unitPrice) : 0), 0)
-      const rec: Receipt = {
-        id: genId('PX'),
-        type: 'export',
-        receiptNo: payload.receiptNo,
-        docDate: payload.docDate,
-        referenceImport: payload.referenceImport,
-        note: payload.note,
-        warehouseId: payload.warehouseId,
-        items: payload.items,
-        itemsCount: payload.items.length,
-        total
+    
+    async addImport(payload: any) {
+      try {
+        const response = await axios.post(`${API_BASE}/receipts/import`, payload)
+        
+        // Thêm vào state local
+        const rec: Receipt = {
+          id: response.data.id,
+          type: 'import',
+          receiptNo: payload.receiptNo,
+          docDate: payload.docDate,
+          referenceImport: payload.referenceImport,
+          note: payload.note,
+          warehouseId: payload.warehouseId,
+          items: payload.items,
+          itemsCount: payload.items.length,
+          total: payload.total || 0
+        }
+        this.receipts.push(rec)
+        return rec.id
+      } catch (err) {
+        console.error('Failed to create import receipt:', err)
+        throw err
       }
-      this.receipts.push(rec)
-      return rec.id
+    },
+    
+    async addExport(payload: any) {
+      try {
+        const response = await axios.post(`${API_BASE}/receipts/export`, payload)
+        
+        // Thêm vào state local
+        const rec: Receipt = {
+          id: response.data.id,
+          type: 'export',
+          receiptNo: payload.receiptNo,
+          docDate: payload.docDate,
+          referenceImport: payload.referenceImport,
+          note: payload.note,
+          warehouseId: payload.warehouseId,
+          items: payload.items,
+          itemsCount: payload.items.length,
+          total: payload.total || 0
+        }
+        this.receipts.push(rec)
+        return rec.id
+      } catch (err) {
+        console.error('Failed to create export receipt:', err)
+        throw err
+      }
     }
   }
 })

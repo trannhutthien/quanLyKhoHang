@@ -18,28 +18,37 @@ const config = {
     }
 };
 
-// Nếu dùng Windows Authentication
+let pool;
+let connectionString;
+
+// Hỗ trợ cả Windows Authentication và SQL Authentication
 if (process.env.DB_TRUSTED_CONNECTION === 'true') {
-    // Dùng msnodesqlv8 driver cho Windows Authentication
-    config.driver = 'msnodesqlv8';
-    config.options.trustedConnection = true;
+    // Windows Authentication với msnodesqlv8
+    connectionString = `Driver={SQL Server Native Client 11.0};Server=${process.env.DB_SERVER};Database=${process.env.DB_DATABASE};Trusted_Connection=yes;`;
+    console.log('🔐 Using Windows Authentication');
+    console.log('   Server:', process.env.DB_SERVER);
+    console.log('   Database:', process.env.DB_DATABASE);
 } else if (process.env.DB_USER && process.env.DB_PASSWORD) {
-    // SQL Server Authentication (khuyến nghị)
+    // SQL Server Authentication
     config.user = process.env.DB_USER;
     config.password = process.env.DB_PASSWORD;
     console.log('🔐 Using SQL Server Authentication');
+    console.log('   User:', process.env.DB_USER);
+    console.log('   Server:', process.env.DB_SERVER);
 } else {
-    console.warn('⚠️ No authentication method specified, using Windows Authentication');
-    config.driver = 'msnodesqlv8';
-    config.options.trustedConnection = true;
+    throw new Error('❌ Either set DB_TRUSTED_CONNECTION=true or provide DB_USER and DB_PASSWORD');
 }
-
-let pool;
 
 async function getConnection() {
     if (!pool) {
-        pool = await sql.connect(config);
-        console.log('✅ Connected to SQL Server:', config.database);
+        if (connectionString) {
+            // Windows Authentication
+            pool = await sql.connect(connectionString);
+        } else {
+            // SQL Authentication
+            pool = await sql.connect(config);
+        }
+        console.log('✅ Connected to SQL Server:', process.env.DB_DATABASE);
     }
     return pool;
 }

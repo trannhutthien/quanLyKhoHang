@@ -59,7 +59,7 @@ const router = useRouter()
 interface ViteEnv {
   VITE_API_BASE_URL?: string
 }
-const API_BASE: string = ((import.meta as unknown as { env: ViteEnv }).env?.VITE_API_BASE_URL) ?? '/api'
+const API_BASE: string = ((import.meta as unknown as { env: ViteEnv }).env?.VITE_API_BASE_URL) ?? 'http://localhost:3001'
 // Form data
 const loginForm = reactive({
   username: '',

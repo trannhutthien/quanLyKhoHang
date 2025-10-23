@@ -9,9 +9,28 @@ router.get('/', async (req, res, next) => {
         const pool = await getConnection();
         const result = await pool.request()
             .query('SELECT * FROM dbo.KHO WHERE DaXoa = 0 ORDER BY TaoLuc DESC');
-        
+
         const warehouses = result.recordset.map(mapWarehouse);
         res.json(warehouses);
+    } catch (err) {
+        next(err);
+    }
+});
+
+// GET /warehouses/:id - Lấy thông tin 1 kho
+router.get('/:id', async (req, res, next) => {
+    try {
+        const pool = await getConnection();
+        const result = await pool.request()
+            .input('MaKho', sql.NVarChar(50), req.params.id)
+            .query('SELECT * FROM dbo.KHO WHERE MaKho = @MaKho AND DaXoa = 0');
+
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ error: 'Warehouse not found' });
+        }
+
+        const warehouse = mapWarehouse(result.recordset[0]);
+        res.json(warehouse);
     } catch (err) {
         next(err);
     }
@@ -21,7 +40,7 @@ router.get('/', async (req, res, next) => {
 router.post('/', async (req, res, next) => {
     try {
         const { id, name, location } = req.body;
-        
+
         if (!id || !name || !location) {
             return res.status(400).json({ error: 'Missing required fields' });
         }
@@ -35,7 +54,7 @@ router.post('/', async (req, res, next) => {
                 INSERT INTO dbo.KHO (MaKho, TenKho, DiaChi)
                 VALUES (@MaKho, @TenKho, @DiaChi)
             `);
-        
+
         res.status(201).json({ id, name, location });
     } catch (err) {
         next(err);
@@ -46,19 +65,26 @@ router.post('/', async (req, res, next) => {
 router.delete('/:id', async (req, res, next) => {
     try {
         const pool = await getConnection();
-        
-        // Xóa hàng hóa trước (hoặc dùng ON DELETE CASCADE nếu muốn hard delete)
-        await pool.request()
+
+        console.log('🗑️ Deleting warehouse:', req.params.id);
+
+        // Xóa tồn kho của kho này trước
+        const deleteInventory = await pool.request()
             .input('MaKho', sql.NVarChar(50), req.params.id)
-            .query('DELETE FROM dbo.HANG_HOA WHERE MaKho = @MaKho');
-        
+            .query('DELETE FROM dbo.TON_KHO WHERE MaKho = @MaKho');
+
+        console.log('  Deleted inventory records:', deleteInventory.rowsAffected[0]);
+
         // Soft delete kho
-        await pool.request()
+        const deleteWarehouse = await pool.request()
             .input('MaKho', sql.NVarChar(50), req.params.id)
             .query('UPDATE dbo.KHO SET DaXoa = 1 WHERE MaKho = @MaKho');
-        
+
+        console.log('  Soft deleted warehouse:', deleteWarehouse.rowsAffected[0]);
+
         res.status(204).send();
     } catch (err) {
+        console.error('❌ Error deleting warehouse:', err.message);
         next(err);
     }
 });

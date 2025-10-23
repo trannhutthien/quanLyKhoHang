@@ -117,7 +117,7 @@ import AppLayout from '../components/AppLayout.vue'
 import axios from 'axios'
 const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL)
   ? (import.meta as any).env.VITE_API_BASE_URL
-  : '/api'
+  : 'http://localhost:3001'
 
 import { useInventoryStore, type Warehouse } from '../stores/inventory'
 
@@ -185,11 +185,12 @@ const onSubmitAuthDelete = async () => {
     }
 
     // 2) Xác thực user
-    const resp = await axios.get(`${API_BASE}/users`, {
-      params: { username: authUsername.value.trim(), password: authPassword.value }
+    const resp = await axios.post(`${API_BASE}/auth/login`, {
+      username: authUsername.value.trim(),
+      password: authPassword.value
     })
-    const users = Array.isArray(resp.data) ? resp.data : []
-    if (users.length === 0) {
+    
+    if (!resp.data || !resp.data.isAuthenticated) {
       authError.value = 'Tài khoản hoặc mật khẩu không đúng'
       return
     }

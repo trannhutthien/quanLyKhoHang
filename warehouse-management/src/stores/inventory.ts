@@ -1,8 +1,10 @@
 import { defineStore } from 'pinia'
 import axios from 'axios'
+
+// API Base URL - ưu tiên env variable, fallback về localhost:3001
 const API_BASE = (typeof import.meta !== 'undefined' && (import.meta as any).env?.VITE_API_BASE_URL)
   ? (import.meta as any).env.VITE_API_BASE_URL
-  : '/api'
+  : 'http://localhost:3001'
 
 
 export interface InventoryItem {
@@ -158,14 +160,12 @@ export const useInventoryStore = defineStore('inventory', {
 
     async deleteWarehouse(id: string) {
       try {
-        // Xóa toàn bộ items thuộc kho trước
-        const itemsResp = await axios.get(`${API_BASE}/items`, { params: { warehouseId: id } })
-        const items: Array<{ id: string }> = Array.isArray(itemsResp.data) ? itemsResp.data : []
-        await Promise.all(items.map(it => axios.delete(`${API_BASE}/items/${encodeURIComponent(it.id)}`)))
-        // Xóa kho
+        // Xóa kho (backend sẽ tự động xóa tồn kho)
         await axios.delete(`${API_BASE}/warehouses/${encodeURIComponent(id)}`)
-        // Cập nhật state
-        this.warehouses = this.warehouses.filter(w => w.id !== id)
+        
+        // Reload danh sách kho từ database để đảm bảo sync
+        await this.fetchWarehousesWithItems()
+        
         return true
       } catch (err) {
         console.error('Lỗi xóa kho hàng', err)

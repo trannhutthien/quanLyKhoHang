@@ -367,25 +367,31 @@ function addExportByItemId(itemId: string) {
 }
 
 
-const submitExport = () => {
-  const payload = {
-    receiptNo: exportForm.receiptNo,
-    docDate: exportForm.docDate,
-    referenceImport: exportForm.referenceImport,
-    note: exportForm.note,
-    warehouseId: exportSourceWarehouseId.value || (exportItems.value[0]?.sourceWarehouseId || ''),
-    items: exportItems.value.map(r => ({
-      itemCode: r.itemCode,
-      itemName: r.itemName,
-      unit: r.unit,
-      quantity: r.quantity,
-      unitPrice: r.unitPrice,
-      warehouseId: r.sourceWarehouseId
-    })),
-    total: totalExport.value
+const submitExport = async () => {
+  try {
+    const payload = {
+      receiptNo: exportForm.receiptNo,
+      docDate: exportForm.docDate,
+      referenceImport: exportForm.referenceImport,
+      note: exportForm.note,
+      warehouseId: exportSourceWarehouseId.value || (exportItems.value[0]?.sourceWarehouseId || ''),
+      items: exportItems.value.map(r => ({
+        itemCode: r.itemCode,
+        itemName: r.itemName,
+        unit: r.unit,
+        quantity: r.quantity,
+        unitPrice: r.unitPrice,
+        warehouseId: r.sourceWarehouseId
+      })),
+      total: totalExport.value
+    }
+    await orders.addExport(payload)
+    alert('✅ Đã lưu phiếu xuất vào database!')
+    selectedMode.value = null
+  } catch (err) {
+    alert('❌ Lỗi khi lưu phiếu xuất. Kiểm tra console.')
+    console.error(err)
   }
-  orders.addExport(payload)
-  alert('Đã lưu vào Đơn hàng. Vào mục "Đơn hàng" để xem danh sách.')
 }
 
 function removeExportRow(idx: number) {
@@ -397,23 +403,37 @@ const cancelImport = () => {
   selectedMode.value = null
 }
 
-const submitImport = () => {
-  const payload = {
-    receiptNo: importForm.receiptNo,
-    docDate: importForm.docDate,
-    note: importForm.note,
-    items: importItems.value.map(r => ({
-      itemCode: r.itemCode,
-      itemName: r.itemName,
-      unit: r.unit,
-      quantity: r.quantity ?? 1,
-      unitPrice: r.unitPrice,
-      warehouseId: r.destWarehouseId
-    })),
-    total: totalImport.value
+const submitImport = async () => {
+  try {
+    const payload = {
+      receiptNo: importForm.receiptNo,
+      docDate: importForm.docDate,
+      postDate: importForm.postDate,
+      supplierName: importForm.supplierName,
+      taxCode: importForm.taxCode,
+      supplierAddress: importForm.supplierAddress,
+      referenceNo: importForm.referenceNo,
+      note: importForm.note,
+      items: importItems.value.map(r => ({
+        itemCode: r.itemCode,
+        itemName: r.itemName,
+        unit: r.unit,
+        quantity: r.quantity ?? 1,
+        unitPrice: r.unitPrice,
+        salePrice: r.salePrice,
+        expiry: r.expiry,
+        quality: r.quality,
+        warehouseId: r.destWarehouseId
+      })),
+      total: totalImport.value
+    }
+    await orders.addImport(payload)
+    alert('✅ Đã lưu phiếu nhập vào database!')
+    selectedMode.value = null
+  } catch (err) {
+    alert('❌ Lỗi khi lưu phiếu nhập. Kiểm tra console.')
+    console.error(err)
   }
-  orders.addImport(payload)
-  alert('Đã lưu vào Đơn hàng. Vào mục "Đơn hàng" để xem danh sách.')
 }
 </script>
 
